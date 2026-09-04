@@ -430,43 +430,54 @@ async function resolvePlace(input){
   }catch(e){}
   return null;
 }
-document.querySelector("#add").addEventListener("click",async()=>{
-  const first=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
-  if(!first)return;
-
-  let resolved=await resolvePlace(first.trim());
-  if(!resolved){
-    const manual=prompt("Non trovo la posizione. Inserisci nome + città/provincia (es. Rocchetta Mattei, Grizzana Morandi BO):",first.trim());
-    if(!manual)return;
-    resolved=await resolvePlace(manual.trim());
+async function saveNewPlace(name,query,lat,lon){
+  const clean=name.trim();
+  const dup=places.find(p=>(p.name||"").trim().toLowerCase()===clean.toLowerCase());
+  if(dup){
+    alert("Questo luogo è già presente nell’elenco.");
+    return null;
   }
-  if(!resolved){
-    alert("Posizione non trovata. Il luogo NON è stato aggiunto.");
-    return;
-  }
-
-  let name=prompt("Nome del luogo:",resolved.name||resolved.query||first.trim());
-  if(!name)return;
-  name=name.trim();
-
-  const {data,error}=await sb.from("places").insert({
-    name,
-    query:resolved.query||name,
-    lat:resolved.lat,
-    lon:resolved.lon
-  }).select().single();
-  if(error){alert("Errore: "+error.message);return}
-
+  const {data,error}=await sb.from("places").insert({name:clean,query:query||clean,lat:+lat,lon:+lon}).select().single();
+  if(error){alert("Errore: "+error.message);return null}
   if(!places.some(p=>p.id===data.id))places.push(data);
   buildSmartFilters();sortByNovara();
   if(!markers[data.id])addMarker(data);
   render();syncMarkerVisibility();
-
   const nm=markers[data.id];
-  if(nm){
-    map.setView(nm.getLatLng(),Math.max(map.getZoom(),9));
-    nm.openPopup();
+  if(nm){map.setView(nm.getLatLng(),Math.max(map.getZoom(),9));nm.openPopup();}
+  return data;
+}
+function choosePointOnMap(name,query){
+  if(window.innerWidth<=760){
+    document.querySelector("#panel").classList.add("closed");
+    syncMenuButton();
   }
+  alert("Non riesco a trovare automaticamente la posizione. Ora tocca il punto esatto sulla mappa.");
+  const handler=async e=>{
+    map.off("click",handler);
+    const ok=confirm("Usare questo punto per “"+name+"”?");
+    if(!ok){alert("Aggiunta annullata.");return}
+    await saveNewPlace(name,query,e.latlng.lat,e.latlng.lng);
+  };
+  map.on("click",handler);
+}
+document.querySelector("#add").addEventListener("click",async()=>{
+  const first=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
+  if(!first)return;
+  const trimmed=first.trim();
+  let resolved=await resolvePlace(trimmed);
+  let suggested=(resolved?.name||resolved?.query||trimmed).trim();
+  let name=prompt("Nome del luogo:",suggested)||suggested;
+  if(!name)return;
+  name=name.trim();
+
+  if(resolved){
+    const ok=confirm("Posizione trovata automaticamente. Vuoi aggiungere “"+name+"” sulla mappa?");
+    if(ok)await saveNewPlace(name,resolved.query||trimmed,resolved.lat,resolved.lon);
+    return;
+  }
+
+  choosePointOnMap(name,trimmed);
 });
 // Aggiornamento in tempo reale: nuovi luoghi e modifiche compaiono senza ricaricare.
 sb.channel("places-live")
