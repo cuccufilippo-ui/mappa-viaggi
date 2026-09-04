@@ -141,7 +141,7 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 const SUPABASE_URL="https://stayygwqojrnsseckjrc.supabase.co";
 const SUPABASE_KEY="sb_publishable_RLhP1PeM_vQSZHC34cLKHQ_FwCKmJGQ";
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const map=L.map("map",{worldCopyJump:true}).setView([35,10],3);
+const map=L.map("map",{worldCopyJump:true,zoomControl:false}).setView([35,10],3);\nL.control.zoom({position:window.innerWidth<=760?"bottomright":"topleft"}).addTo(map);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
 
 let places=[], markers={}, rowsById={}, activeFilter="all";
