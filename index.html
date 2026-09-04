@@ -5,27 +5,9 @@ const greenIcon=L.icon({
   shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
 });
-function syncMarker(p){ if(markers[p.id]) markers[p.id].setIcon(p.visited?greenIcon:defaultIcon); }const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");function count(){let d=places.filter(x=>x.visited).length;document.querySelector("#count").textContent=`${d} / ${places.length} visitati`}function render(){let f=document.querySelector("#search").value.toLowerCase(),list=document.querySelector("#list");list.innerHTML="";places.forEach((p,i)=>{if(f&&!p.name.toLowerCase().includes(f))return;let row=document.createElement("div");row.className="item";row.innerHTML=`<input type="checkbox" ${p.visited?"checked":""}><span class="num">${i+1}</span><span class="name ${p.visited?"done":""}">${esc(p.name)}</span>`;row.querySelector("input").onchange=async e=>{p.visited=e.target.checked;row.querySelector(".name").classList.toggle("done",p.visited);count();let u=await sb.from("places").update({visited:p.visited}).eq("id",p.id);if(u.error){p.visited=!p.visited;e.target.checked=p.visited;row.querySelector(".name").classList.toggle("done",p.visited);count();alert("Impossibile salvare la selezione: "+u.error.message);return}syncMarker(p)};row.onclick=e=>{if(e.target.tagName==="INPUT")return;if(markers[p.id]){map.setView(markers[p.id].getLatLng(),Math.max(map.getZoom(),8));markers[p.id].openPopup()}};list.appendChild(row)});count()}async function geocode(p){if(p.lat&&p.lon){addMarker(p);return}try{let r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(p.query||p.name),{headers:{"Accept-Language":"it"}}),d=await r.json();if(d.length){p.lat=+d[0].lat;p.lon=+d[0].lon;await sb.from("places").update({lat:p.lat,lon:p.lon}).eq("id",p.id);addMarker(p)}}catch(e){}}function addMarker(p){if(markers[p.id]){syncMarker(p);return}markers[p.id]=L.marker([p.lat,p.lon],{icon:p.visited?greenIcon:defaultIcon}).addTo(map).bindPopup(`<b>${esc(p.name)}</b><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.query||p.name)}">Apri in Google Maps</a>`)}async function geocodeMissingInBackground(){
- const missing=places.filter(p=>!p.lat||!p.lon);
- if(!missing.length)return;
- document.querySelector("#count").textContent+=` · ${missing.length} posizioni in aggiornamento`;
- const concurrency=4;
- let idx=0;
- async function worker(){
-   while(idx<missing.length){
-     const p=missing[idx++];
-     await geocode(p);
-     await new Promise(x=>setTimeout(x,350));
-   }
- }
- await Promise.all(Array.from({length:Math.min(concurrency,missing.length)},worker));
- count();
-}
-async function load(){
+function syncMarker(p){ if(markers[p.id]) markers[p.id].setIcon(p.visited?greenIcon:defaultIcon); }const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");function count(){let d=places.filter(x=>x.visited).length;document.querySelector("#count").textContent=`${d} / ${places.length} visitati`}function render(){let f=document.querySelector("#search").value.toLowerCase(),list=document.querySelector("#list");list.innerHTML="";places.forEach((p,i)=>{if(f&&!p.name.toLowerCase().includes(f))return;let row=document.createElement("div");row.className="item";row.innerHTML=`<input type="checkbox" ${p.visited?"checked":""}><span class="num">${i+1}</span><span class="name ${p.visited?"done":""}">${esc(p.name)}</span>`;row.querySelector("input").onchange=async e=>{p.visited=e.target.checked;row.querySelector(".name").classList.toggle("done",p.visited);count();let u=await sb.from("places").update({visited:p.visited}).eq("id",p.id);if(u.error){p.visited=!p.visited;e.target.checked=p.visited;row.querySelector(".name").classList.toggle("done",p.visited);count();alert("Impossibile salvare la selezione: "+u.error.message);return}syncMarker(p)};row.onclick=e=>{if(e.target.tagName==="INPUT")return;if(markers[p.id]){map.setView(markers[p.id].getLatLng(),Math.max(map.getZoom(),8));markers[p.id].openPopup()}};list.appendChild(row)});count()}async function geocode(p){if(p.lat&&p.lon){addMarker(p);return}try{let r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(p.query||p.name),{headers:{"Accept-Language":"it"}}),d=await r.json();if(d.length){p.lat=+d[0].lat;p.lon=+d[0].lon;await sb.from("places").update({lat:p.lat,lon:p.lon}).eq("id",p.id);addMarker(p)}}catch(e){}}function addMarker(p){if(markers[p.id]){syncMarker(p);return}markers[p.id]=L.marker([p.lat,p.lon],{icon:p.visited?greenIcon:defaultIcon}).addTo(map).bindPopup(`<b>${esc(p.name)}</b><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.query||p.name)}">Apri in Google Maps</a>`)}async function load(){
  let r=await sb.from("places").select("*").order("id");
  if(r.error){document.querySelector("#count").textContent="Errore database: "+r.error.message;return}
- places=r.data;
- render();
- for(const p of places){if(p.lat&&p.lon)addMarker(p)}
- geocodeMissingInBackground();
+ places=r.data; render();
+ for(const p of places){if(p.lat&&p.lon&&!(p.lat===0&&p.lon===0))addMarker(p)}
 }document.querySelector("#search").oninput=render;document.querySelector("#add").onclick=async()=>{let name=prompt("Nome del nuovo luogo:");if(!name)return;let q=prompt("Località/indirizzo per posizionarlo sulla mappa:",name);let r=await sb.from("places").insert({name,query:q||name}).select().single();if(r.data){places.push(r.data);render();await geocode(r.data)}};load();</script></body></html>
