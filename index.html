@@ -37,10 +37,10 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 .controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:1px}
 .filter{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer;transition:.18s ease;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .filter:hover{transform:translateY(-1px)}.filter.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 5px 12px rgba(15,23,42,.16)}
-#search{width:100%;margin-top:8px;padding:10px 12px;border:1px solid #cfd4dc;border-radius:12px;font-size:14px;background:var(--panel);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.04);outline:none}#search:focus{border-color:#94a3b8;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
+#search{width:100%;margin-top:0;padding:8px 9px;border:1px solid #cfd4dc;border-radius:12px;font-size:14px;background:var(--panel);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.04);outline:none}#search:focus{border-color:#94a3b8;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
 .legend{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted)}
-.smartControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.smartControls select,.smartControls button{min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 9px;font-size:11px;font-weight:650;box-shadow:0 1px 4px rgba(15,23,42,.04)}
+.smartControls{display:grid;grid-template-columns:1.35fr .95fr 1.1fr;gap:5px;margin-top:6px}
+.smartControls select,.smartControls button,.smartControls input{min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 9px;font-size:11px;font-weight:650;box-shadow:0 1px 4px rgba(15,23,42,.04)}
 .toolRow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
 .toolRow button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 3px;font-size:15px;cursor:pointer;transition:.18s ease}.toolRow button:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.08)}
 .distance{display:block;font-size:10px;color:var(--muted);margin-top:2px}
@@ -101,7 +101,9 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
   .stat span{font-size:8px}
   .controls{gap:6px}
   .filter{min-height:40px;padding:9px 12px;font-size:13px}
-  #search{font-size:16px;min-height:44px;padding:11px 12px}
+  #search{font-size:16px;min-height:38px;padding:7px 8px}
+  .smartControls{grid-template-columns:1.25fr .9fr 1.05fr;gap:4px}
+  .smartControls select{font-size:10px;padding:7px 4px}
   .item{min-height:52px;padding:11px 12px}
   .item input{width:20px;height:20px}
   .name{font-size:14px}
