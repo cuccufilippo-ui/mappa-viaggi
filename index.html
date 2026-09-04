@@ -1,21 +1,226 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mappa Viaggi</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;height:100vh;display:flex}aside{width:380px;max-width:43vw;display:flex;flex-direction:column;background:#fff;border-right:1px solid #ddd}header{padding:14px;border-bottom:1px solid #ddd}h1{margin:0 0 5px;font-size:21px}#count{font-size:12px;color:#666;margin-bottom:9px}input[type=search]{width:100%;padding:9px;border:1px solid #bbb;border-radius:7px}.item{display:flex;gap:8px;align-items:center;padding:7px 9px;border-bottom:1px solid #eee;font-size:13px;cursor:pointer}.item:hover{background:#f5f7fa}.item.active{background:#fff3b0;box-shadow:inset 4px 0 0 #222;font-weight:700}.item input{width:17px;height:17px}.num{background:#333;color:#fff;border-radius:50%;min-width:23px;height:23px;display:inline-flex;align-items:center;justify-content:center;font-size:10px}.name{flex:1}.done{text-decoration:line-through;color:#888}#list{overflow:auto;flex:1}#map{flex:1}.add{padding:9px;border-top:1px solid #ddd}.add button{width:100%;padding:9px;border:0;border-radius:7px;background:#222;color:white;cursor:pointer}.leaflet-popup-content{font-size:13px}@media(max-width:700px){body{display:block}aside{position:absolute;z-index:1000;width:100%;max-width:none;height:42vh;bottom:0;border-right:0;border-top:1px solid #ddd}#map{height:58vh}}</style></head><body><aside><header><h1>🌍 Mappa Viaggi</h1><div id="count">Caricamento…</div><input id="search" type="search" placeholder="Cerca un luogo…"></header><div id="list"></div><div class="add"><button id="add">＋ Aggiungi luogo</button></div></aside><div id="map"></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>const SUPABASE_URL="https://stayygwqojrnsseckjrc.supabase.co",SUPABASE_KEY="sb_publishable_RLhP1PeM_vQSZHC34cLKHQ_FwCKmJGQ";const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const map=L.map("map").setView([35,10],3);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);let places=[],markers={},rowsById={};
-const defaultIcon=new L.Icon.Default();
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mappa Viaggi</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#f4f6f8;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--visited:#16a34a;--pending:#2563eb;--highlight:#fff3b0}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body{overflow:hidden}
+#app{height:100%;display:flex}
+aside{width:390px;max-width:44vw;background:var(--panel);display:flex;flex-direction:column;border-right:1px solid var(--line);z-index:1000;transition:transform .25s ease}
+.top{padding:16px 16px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.96);backdrop-filter:blur(10px)}
+.titleRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
+.iconBtn{border:1px solid var(--line);background:#fff;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stat{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:11px;color:var(--muted)}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.filter{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 11px;font-size:12px;cursor:pointer}
+.filter.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#search{width:100%;margin-top:10px;padding:10px 12px;border:1px solid #cfd4dc;border-radius:10px;font-size:14px}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+.dot.pending{background:var(--pending)} .dot.visited{background:var(--visited)}
+#list{overflow:auto;flex:1;scroll-behavior:smooth}
+.item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid #f0f1f3;cursor:pointer;transition:.15s;background:#fff}
+.item:hover{background:#f8fafc}
+.item.active{background:var(--highlight);box-shadow:inset 4px 0 0 var(--accent);font-weight:700}
+.item input{width:18px;height:18px;accent-color:var(--visited);flex:0 0 auto}
+.num{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;border-radius:50%;background:#eef2f7;font-size:11px;font-weight:700;color:#475569}
+.name{flex:1;font-size:13px;line-height:1.25}
+.name.done{color:#64748b;text-decoration:line-through}
+.badge{font-size:10px;border-radius:999px;padding:4px 7px;background:#eef2f7;color:#475569}
+.badge.done{background:#dcfce7;color:#166534}
+.bottom{padding:10px 12px;border-top:1px solid var(--line);background:#fff}
+#add{width:100%;padding:11px 14px;border:0;border-radius:11px;background:var(--accent);color:white;font-weight:700;cursor:pointer}
+#map{flex:1;height:100%}
+#openPanel{position:absolute;top:14px;left:14px;z-index:1100;display:none}
+.leaflet-popup-content{font-size:13px}
+.leaflet-popup-content b{font-size:14px}
+.empty{padding:20px;color:var(--muted);text-align:center;font-size:13px}
+@media(max-width:760px){
+  #app{display:block}
+  #map{height:100%}
+  aside{position:absolute;left:0;top:0;bottom:0;width:min(92vw,390px);max-width:none;box-shadow:8px 0 25px rgba(0,0,0,.12)}
+  aside.closed{transform:translateX(-102%)}
+  #openPanel{display:block}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <button id="openPanel" class="iconBtn">☰</button>
+  <aside id="panel">
+    <div class="top">
+      <div class="titleRow">
+        <h1>🌍 Mappa Viaggi</h1>
+        <button id="closePanel" class="iconBtn" title="Chiudi pannello">×</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="statTotal">0</b><span>Luoghi</span></div>
+        <div class="stat"><b id="statVisited">0</b><span>Visitati</span></div>
+        <div class="stat"><b id="statTodo">0</b><span>Da visitare</span></div>
+      </div>
+      <div class="controls">
+        <button class="filter active" data-filter="all">Tutti</button>
+        <button class="filter" data-filter="todo">Da visitare</button>
+        <button class="filter" data-filter="visited">Visitati</button>
+      </div>
+      <input id="search" type="search" placeholder="Cerca un luogo…">
+      <div class="legend">
+        <span><i class="dot pending"></i>Da visitare</span>
+        <span><i class="dot visited"></i>Visitato</span>
+      </div>
+    </div>
+    <div id="list"></div>
+    <div class="bottom"><button id="add">＋ Aggiungi luogo</button></div>
+  </aside>
+  <div id="map"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://stayygwqojrnsseckjrc.supabase.co";
+const SUPABASE_KEY="sb_publishable_RLhP1PeM_vQSZHC34cLKHQ_FwCKmJGQ";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const map=L.map("map",{worldCopyJump:true}).setView([35,10],3);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
+
+let places=[], markers={}, rowsById={}, activeFilter="all";
+const blueIcon=L.icon({
+  iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
+});
 const greenIcon=L.icon({
   iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
   shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize:[25,41],iconAnchor:[12,41],popupAnchor:[1,-34],shadowSize:[41,41]
 });
-function syncMarker(p){ if(markers[p.id]) markers[p.id].setIcon(p.visited?greenIcon:defaultIcon); }const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");function count(){let d=places.filter(x=>x.visited).length;document.querySelector("#count").textContent=`${d} / ${places.length} visitati`}function render(){let f=document.querySelector("#search").value.toLowerCase(),list=document.querySelector("#list");list.innerHTML="";rowsById={};places.forEach((p,i)=>{if(f&&!p.name.toLowerCase().includes(f))return;let row=document.createElement("div");row.className="item";row.dataset.placeId=p.id;rowsById[p.id]=row;row.innerHTML=`<input type="checkbox" ${p.visited?"checked":""}><span class="num">${i+1}</span><span class="name ${p.visited?"done":""}">${esc(p.name)}</span>`;row.querySelector("input").onchange=async e=>{p.visited=e.target.checked;row.querySelector(".name").classList.toggle("done",p.visited);count();let u=await sb.from("places").update({visited:p.visited}).eq("id",p.id);if(u.error){p.visited=!p.visited;e.target.checked=p.visited;row.querySelector(".name").classList.toggle("done",p.visited);count();alert("Impossibile salvare la selezione: "+u.error.message);return}syncMarker(p)};row.onclick=e=>{if(e.target.tagName==="INPUT")return;if(markers[p.id]){map.setView(markers[p.id].getLatLng(),Math.max(map.getZoom(),8));markers[p.id].openPopup()}};list.appendChild(row)});count()}async function geocode(p){if(p.lat&&p.lon){addMarker(p);return}try{let r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(p.query||p.name),{headers:{"Accept-Language":"it"}}),d=await r.json();if(d.length){p.lat=+d[0].lat;p.lon=+d[0].lon;await sb.from("places").update({lat:p.lat,lon:p.lon}).eq("id",p.id);addMarker(p)}}catch(e){}}function focusListItem(id){
- document.querySelectorAll(".item.active").forEach(el=>el.classList.remove("active"));
- const row=rowsById[id]||document.querySelector('.item[data-place-id="'+id+'"]');
- if(row){
-   row.classList.add("active");
-   row.scrollIntoView({behavior:"smooth",block:"center"});
- }
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+
+function updateStats(){
+  const visited=places.filter(p=>p.visited).length;
+  document.querySelector("#statTotal").textContent=places.length;
+  document.querySelector("#statVisited").textContent=visited;
+  document.querySelector("#statTodo").textContent=places.length-visited;
 }
-function addMarker(p){if(markers[p.id]){syncMarker(p);return}markers[p.id]=L.marker([p.lat,p.lon],{icon:p.visited?greenIcon:defaultIcon}).addTo(map).bindPopup(`<b>${esc(p.name)}</b><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.query||p.name)}">Apri in Google Maps</a>`);markers[p.id].on("click",()=>focusListItem(p.id))}async function load(){
- let r=await sb.from("places").select("*").order("id");
- if(r.error){document.querySelector("#count").textContent="Errore database: "+r.error.message;return}
- places=r.data; render();
- for(const p of places){if(p.lat&&p.lon&&!(p.lat===0&&p.lon===0))addMarker(p)}
-}document.querySelector("#search").oninput=render;document.querySelector("#add").onclick=async()=>{let name=prompt("Nome del nuovo luogo:");if(!name)return;let q=prompt("Località/indirizzo per posizionarlo sulla mappa:",name);let r=await sb.from("places").insert({name,query:q||name}).select().single();if(r.data){places.push(r.data);render();await geocode(r.data)}};load();</script></body></html>
+function passesFilter(p){
+  if(activeFilter==="visited"&&!p.visited)return false;
+  if(activeFilter==="todo"&&p.visited)return false;
+  const q=document.querySelector("#search").value.trim().toLowerCase();
+  return !q||p.name.toLowerCase().includes(q);
+}
+function syncMarkerVisibility(){
+  for(const p of places){
+    const m=markers[p.id];
+    if(!m)continue;
+    const show=passesFilter(p);
+    if(show&&!map.hasLayer(m))m.addTo(map);
+    if(!show&&map.hasLayer(m))map.removeLayer(m);
+  }
+}
+function syncMarker(p){
+  const m=markers[p.id];
+  if(m)m.setIcon(p.visited?greenIcon:blueIcon);
+}
+function render(){
+  const list=document.querySelector("#list");
+  list.innerHTML=""; rowsById={};
+  const filtered=places.filter(p=>passesFilter(p));
+  if(!filtered.length){list.innerHTML='<div class="empty">Nessun luogo trovato</div>'}
+  filtered.forEach((p)=>{
+    const row=document.createElement("div");
+    row.className="item"; row.dataset.placeId=p.id; rowsById[p.id]=row;
+    const idx=places.indexOf(p)+1;
+    row.innerHTML=`<input type="checkbox" ${p.visited?"checked":""}>
+      <span class="num">${idx}</span>
+      <span class="name ${p.visited?"done":""}">${esc(p.name)}</span>
+      <span class="badge ${p.visited?"done":""}">${p.visited?"Visitato":"Da visitare"}</span>`;
+    const cb=row.querySelector("input");
+    cb.addEventListener("click",e=>e.stopPropagation());
+    cb.addEventListener("change",async e=>{
+      const old=p.visited;
+      p.visited=e.target.checked;
+      syncMarker(p); updateStats(); render(); syncMarkerVisibility();
+      const {error}=await sb.from("places").update({visited:p.visited}).eq("id",p.id);
+      if(error){
+        p.visited=old; alert("Impossibile salvare la modifica: "+error.message);
+        syncMarker(p); updateStats(); render(); syncMarkerVisibility();
+      }
+    });
+    row.addEventListener("click",()=>{
+      const m=markers[p.id];
+      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id)}
+    });
+    list.appendChild(row);
+  });
+  updateStats();
+  syncMarkerVisibility();
+}
+function focusListItem(id){
+  document.querySelectorAll(".item.active").forEach(el=>el.classList.remove("active"));
+  const p=places.find(x=>x.id===id);
+  if(!p)return;
+  if(!passesFilter(p)){
+    activeFilter="all";
+    document.querySelectorAll(".filter").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));
+    document.querySelector("#search").value="";
+    render();
+  }
+  const row=rowsById[id]||document.querySelector('.item[data-place-id="'+id+'"]');
+  if(row){row.classList.add("active");row.scrollIntoView({behavior:"smooth",block:"center"})}
+  if(window.innerWidth<=760)document.querySelector("#panel").classList.remove("closed");
+}
+function addMarker(p){
+  if(!p.lat||!p.lon||markers[p.id])return;
+  const m=L.marker([p.lat,p.lon],{icon:p.visited?greenIcon:blueIcon});
+  m.bindPopup(`<b>${esc(p.name)}</b><br><span>${p.visited?"✅ Visitato":"📍 Da visitare"}</span><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.query||p.name)}">Apri in Google Maps</a>`);
+  m.on("click",()=>focusListItem(p.id));
+  markers[p.id]=m;
+  if(passesFilter(p))m.addTo(map);
+}
+async function geocodeNew(p){
+  try{
+    const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(p.query||p.name),{headers:{"Accept-Language":"it"}});
+    const d=await r.json();
+    if(d.length){
+      p.lat=+d[0].lat;p.lon=+d[0].lon;
+      await sb.from("places").update({lat:p.lat,lon:p.lon}).eq("id",p.id);
+      addMarker(p); render();
+    }
+  }catch(e){}
+}
+async function load(){
+  const {data,error}=await sb.from("places").select("*").order("id");
+  if(error){document.querySelector("#list").innerHTML='<div class="empty">Errore database: '+esc(error.message)+'</div>';return}
+  places=data||[];
+  places.forEach(addMarker);
+  render();
+}
+document.querySelector("#search").addEventListener("input",render);
+document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{
+  activeFilter=btn.dataset.filter;
+  document.querySelectorAll(".filter").forEach(b=>b.classList.toggle("active",b===btn));
+  render();
+}));
+document.querySelector("#add").addEventListener("click",async()=>{
+  const name=prompt("Nome del nuovo luogo:");
+  if(!name)return;
+  const q=prompt("Località/indirizzo per posizionarlo sulla mappa:",name);
+  const {data,error}=await sb.from("places").insert({name,query:q||name}).select().single();
+  if(error){alert("Errore: "+error.message);return}
+  places.push(data); render(); await geocodeNew(data);
+});
+document.querySelector("#closePanel").addEventListener("click",()=>document.querySelector("#panel").classList.add("closed"));
+document.querySelector("#openPanel").addEventListener("click",()=>document.querySelector("#panel").classList.remove("closed"));
+load();
+</script>
+</body>
+</html>
