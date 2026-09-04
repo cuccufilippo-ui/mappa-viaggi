@@ -1,0 +1,19 @@
+{
+  "name": "Mappa Viaggi",
+  "short_name": "Mappa Viaggi",
+  "description": "Mappa personale dei viaggi in moto",
+  "start_url": "/mappa-viaggi/",
+  "scope": "/mappa-viaggi/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/mappa-viaggi/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
