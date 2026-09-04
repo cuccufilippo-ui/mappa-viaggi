@@ -420,29 +420,64 @@ document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",(
   document.querySelectorAll(".filter").forEach(b=>b.classList.toggle("active",b===btn));
   render();
 }));
+async function geocodeText(q){
+  try{
+    const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(q),{headers:{"Accept-Language":"it"}});
+    const d=await r.json();
+    if(Array.isArray(d)&&d.length)return {lat:+d[0].lat,lon:+d[0].lon};
+  }catch(e){}
+  return null;
+}
 document.querySelector("#add").addEventListener("click",async()=>{
   const first=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
   if(!first)return;
-  let name=first,lat=null,lon=null,q=first;
+  let name=first.trim(),q=name,lat=null,lon=null;
+
   if(/^https?:\/\//i.test(first)){
     try{
-      const rr=await fetch(SUPABASE_URL+"/functions/v1/resolve-google-maps?url="+encodeURIComponent(first));
-      const d=await rr.json();lat=d.lat;lon=d.lon;name=d.name||"";
-      name=prompt("Nome del luogo:",name||"")||name;
+      const rr=await fetch(SUPABASE_URL+"/functions/v1/resolve-google-maps?url="+encodeURIComponent(first),{cache:"no-store"});
+      const d=await rr.json();
+      name=(d.name||"").trim();
+      q=(d.queryText||d.name||"").trim();
+      if(Number.isFinite(+d.lat)&&Number.isFinite(+d.lon)){lat=+d.lat;lon=+d.lon}
+      name=prompt("Nome del luogo:",name||q||"")||name||q;
       if(!name)return;
-      q=d.queryText||d.name||name;
-    }catch(e){alert("Non sono riuscito a leggere automaticamente il link. Inserisci il luogo manualmente.");return}
+      if(!q)q=name;
+    }catch(e){
+      alert("Non sono riuscito a leggere il link Google Maps.");
+      return;
+    }
   }else{
-    q=prompt("Località/indirizzo per posizionarlo sulla mappa:",first)||first;
+    q=prompt("Località/indirizzo per posizionarlo sulla mappa:",name)||name;
   }
-  const payload={name,query:q};if(lat&&lon){payload.lat=lat;payload.lon=lon}
-  const {data,error}=await sb.from("places").insert(payload).select().single();
+
+  // Non salviamo più record senza coordinate.
+  if(lat==null||lon==null){
+    const geo=await geocodeText(q);
+    if(geo){lat=geo.lat;lon=geo.lon}
+  }
+  if(lat==null||lon==null){
+    const manual=prompt("Non trovo automaticamente la posizione. Inserisci un luogo/indirizzo più preciso:",q);
+    if(!manual)return;
+    q=manual;
+    const geo=await geocodeText(q);
+    if(geo){lat=geo.lat;lon=geo.lon}
+  }
+  if(lat==null||lon==null){
+    alert("Posizione non trovata: il luogo NON è stato aggiunto, così non rimane nell’elenco senza marker.");
+    return;
+  }
+
+  const {data,error}=await sb.from("places").insert({name,query:q,lat,lon}).select().single();
   if(error){alert("Errore: "+error.message);return}
-  places.push(data);buildSmartFilters();sortByNovara();render();
-  if(!lat||!lon)await geocodeNew(data);else addMarker(data);
-  sortByNovara();render();syncMarkerVisibility();
+  places.push(data);
+  buildSmartFilters();sortByNovara();
+  addMarker(data);render();syncMarkerVisibility();
   const nm=markers[data.id];
-  if(nm){map.setView(nm.getLatLng(),Math.max(map.getZoom(),8));nm.openPopup();}
+  if(nm){
+    map.setView(nm.getLatLng(),Math.max(map.getZoom(),9));
+    nm.openPopup();
+  }
 });
 // Aggiornamento in tempo reale: nuovi luoghi e modifiche compaiono senza ricaricare.
 sb.channel("places-live")
