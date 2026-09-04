@@ -38,10 +38,10 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 .filter{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer;transition:.18s ease;box-shadow:0 1px 3px rgba(15,23,42,.04)}
 .filter:hover{transform:translateY(-1px)}.filter.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 5px 12px rgba(15,23,42,.16)}
 #search{width:100%;margin-top:0;padding:8px 9px;border:1px solid #cfd4dc;border-radius:12px;font-size:14px;background:var(--panel);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.04);outline:none}#search:focus{border-color:#94a3b8;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
-.legend{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted)}
+.legend{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted)}.legendFilters{display:grid;grid-template-columns:auto auto minmax(0,1fr) minmax(0,1.15fr);align-items:center;gap:5px;margin-top:5px}.legendFilters span{white-space:nowrap;font-size:9px}.legendFilters select{min-width:0;width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:5px 3px;font-size:9px;font-weight:650}
 .smartControls{display:grid;grid-template-columns:1.35fr .95fr 1.1fr;gap:5px;margin-top:6px}
 .smartControls select,.smartControls button,.smartControls input{min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 9px;font-size:11px;font-weight:650;box-shadow:0 1px 4px rgba(15,23,42,.04)}
-.toolRow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
+.toolRow{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:5px}
 .toolRow button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 3px;font-size:15px;cursor:pointer;transition:.18s ease}.toolRow button:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.08)}
 .distance{display:block;font-size:10px;color:var(--muted);margin-top:2px}
 .popupMeta{font-size:11px;color:#64748b;margin:4px 0 7px}
@@ -142,19 +142,17 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
         <button class="filter" data-filter="todo">Da visitare</button>
       </div>
       <input id="search" type="search" placeholder="Cerca un luogo…">
-      <div class="smartControls">
-        <select id="areaFilter"><option value="all">🌍 Tutte le aree</option></select>
-        <select id="catFilter"><option value="all">🏷️ Tutte le categorie</option></select>
-      </div>
       <div class="toolRow">
         <button id="nearMe" title="Vicino a me">◎</button>
         <button id="tripMode" title="Modalità viaggio">🏍️</button>
         <button id="darkMode" title="Tema scuro">◐</button>
         <button id="exportMenu" title="Esporta CSV/GPX">⇩</button>
       </div>
-      <div id="filterSummary" style="display:none;margin-top:6px;padding:6px 8px;border-radius:9px;background:#f8fafc;border:1px solid var(--line);font-size:10px;color:var(--muted);font-weight:650"></div><div class="legend">
+      <div id="filterSummary" style="display:none;margin-top:6px;padding:6px 8px;border-radius:9px;background:#f8fafc;border:1px solid var(--line);font-size:10px;color:var(--muted);font-weight:650"></div><div class="legend legendFilters">
         <span><i class="dot pending"></i>Da visitare</span>
         <span><i class="dot visited"></i>Visitato</span>
+        <select id="areaFilter"><option value="all">🌍 Tutte le aree</option></select>
+        <select id="catFilter"><option value="all">🏷️ Tutte le categorie</option></select>
       </div>
     </div>
     <div id="list"></div>
