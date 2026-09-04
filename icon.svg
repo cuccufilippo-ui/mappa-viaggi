@@ -1,9 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0f172a"/>
-  <circle cx="256" cy="218" r="124" fill="#1d4ed8"/>
-  <path d="M153 197c35-62 120-88 187-49 48 29 72 80 62 128-7 36-31 73-68 92-63 31-140 8-174-50-22-37-25-80-7-121z" fill="#22c55e" opacity=".95"/>
-  <circle cx="164" cy="358" r="44" fill="none" stroke="#fff" stroke-width="18"/>
-  <circle cx="350" cy="358" r="44" fill="none" stroke="#fff" stroke-width="18"/>
-  <path d="M163 358l54-82h66l38 82m-104-82-30 82h82l32-56h43m-112-49h58" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M285 241l31-24 26 12" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/>
+<defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b3b70"/><stop offset="1" stop-color="#071b33"/></linearGradient><linearGradient id="r" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ef4444"/><stop offset="1" stop-color="#b91c1c"/></linearGradient></defs>
+<rect width="512" height="512" rx="108" fill="url(#b)"/>
+<circle cx="256" cy="205" r="142" fill="#1677c8"/>
+<path d="M142 170c36-51 76-75 128-75 72 0 127 46 137 108-27-20-48-24-72-13-30 14-48 13-70-4-26-20-47-22-69-6-21 15-38 13-54-10z" fill="#35a853"/>
+<path d="M120 226c30 10 55 7 77-10 27-21 50-20 76 2 26 21 53 23 82 4 20-13 39-14 57-5-7 71-66 127-140 131-78 4-143-48-152-122z" fill="#4fbf69"/>
+<path d="M139 289c37-25 78-42 124-50 45-8 87-4 125 12" fill="none" stroke="#fff" stroke-width="13" stroke-linecap="round" opacity=".9"/>
+<path d="M337 131c0-28 22-50 50-50s50 22 50 50c0 37-50 88-50 88s-50-51-50-88z" fill="url(#r)" stroke="#fff" stroke-width="7"/><circle cx="387" cy="131" r="17" fill="#fff"/>
+<circle cx="155" cy="377" r="47" fill="none" stroke="#fff" stroke-width="18"/><circle cx="358" cy="377" r="47" fill="none" stroke="#fff" stroke-width="18"/>
+<path d="M155 377l62-91h72l41 91m-113-91-34 91h93l35-61h48m-126-54h63l28 30" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M267 250l34-25 31 15" fill="none" stroke="#fff" stroke-width="15" stroke-linecap="round"/>
+<path d="M82 445h348" stroke="#fff" stroke-opacity=".22" stroke-width="3"/>
+<text x="256" y="476" text-anchor="middle" font-family="Arial,sans-serif" font-size="31" font-weight="700" fill="#fff">MAPPA VIAGGI</text>
 </svg>
