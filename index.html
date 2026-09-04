@@ -30,19 +30,19 @@ aside{width:390px;max-width:44vw;background:var(--panel);display:flex;flex-direc
 .titleRow{display:flex;align-items:center;justify-content:space-between;gap:12px}
 h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 .iconBtn{border:1px solid var(--line);background:#fff;border-radius:10px;width:38px;height:38px;cursor:pointer;font-size:18px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:7px 0}
-.stat{background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:6px 8px;animation:statIn .45s ease-out both}.stat:nth-child(1){animation-delay:.16s}.stat:nth-child(2){animation-delay:.24s}.stat:nth-child(3){animation-delay:.32s}
-.stat b{display:block;font-size:15px;line-height:1.1}
-.stat span{font-size:9px;color:var(--muted)}
-.controls{display:flex;gap:8px;flex-wrap:wrap}
-.filter{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 11px;font-size:12px;cursor:pointer}
-.filter.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-#search{width:100%;margin-top:10px;padding:10px 12px;border:1px solid #cfd4dc;border-radius:10px;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 7px}
+.stat{position:relative;overflow:hidden;background:linear-gradient(180deg,#fff,#f8fafc);border:1px solid var(--line);border-radius:11px;padding:7px 8px 6px;box-shadow:0 2px 8px rgba(15,23,42,.05);animation:statIn .45s ease-out both}.stat:nth-child(1){animation-delay:.12s}.stat:nth-child(2){animation-delay:.18s}.stat:nth-child(3){animation-delay:.24s}.stat:nth-child(4){animation-delay:.30s}.stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:#cbd5e1}.stat-visited::after{background:#22c55e}.stat-todo::after{background:#3b82f6}.stat-results::after{background:#f59e0b}
+.stat b{display:block;font-size:16px;line-height:1.05;letter-spacing:-.02em}
+.stat span{font-size:9px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+.controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:1px}
+.filter{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700;cursor:pointer;transition:.18s ease;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.filter:hover{transform:translateY(-1px)}.filter.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 5px 12px rgba(15,23,42,.16)}
+#search{width:100%;margin-top:8px;padding:10px 12px;border:1px solid #cfd4dc;border-radius:12px;font-size:14px;background:var(--panel);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.04);outline:none}#search:focus{border-color:#94a3b8;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
 .legend{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted)}
-.smartControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
-.smartControls select,.smartControls button{min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:7px 8px;font-size:11px}
+.smartControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.smartControls select,.smartControls button{min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 9px;font-size:11px;font-weight:650;box-shadow:0 1px 4px rgba(15,23,42,.04)}
 .toolRow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
-.toolRow button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:7px 3px;font-size:15px;cursor:pointer}
+.toolRow button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:8px 3px;font-size:15px;cursor:pointer;transition:.18s ease}.toolRow button:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.08)}
 .distance{display:block;font-size:10px;color:var(--muted);margin-top:2px}
 .popupMeta{font-size:11px;color:#64748b;margin:4px 0 7px}
 body.dark{--bg:#07111f;--panel:#111827;--text:#f3f4f6;--muted:#9ca3af;--line:#374151;--accent:#2563eb;--highlight:#263449}
@@ -55,17 +55,17 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
 .dot.pending{background:var(--pending)} .dot.visited{background:var(--visited)}
 #list{overflow:auto;flex:1;scroll-behavior:smooth}
-.item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid #f0f1f3;cursor:pointer;transition:.15s;background:#fff;animation:itemIn .28s ease-out both}
-.item:hover{background:#f8fafc}
+.item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-bottom:1px solid #eef2f7;cursor:pointer;transition:.16s;background:#fff;animation:itemIn .28s ease-out both}.item:nth-child(even){background:#fbfdff}
+.item:hover{background:#f1f5f9;transform:translateX(2px)}
 .item.active{background:var(--highlight);box-shadow:inset 4px 0 0 var(--accent);font-weight:700}
 .item input{width:18px;height:18px;accent-color:var(--visited);flex:0 0 auto}
-.num{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;border-radius:50%;background:#eef2f7;font-size:11px;font-weight:700;color:#475569}
+.num{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:9px;background:#eef2f7;font-size:10px;font-weight:800;color:#475569}
 .name{flex:1;font-size:13px;line-height:1.25}
 .name.done{color:#64748b;text-decoration:none}
-.badge{font-size:10px;border-radius:999px;padding:4px 7px;background:#eef2f7;color:#475569}
+.badge{font-size:9px;font-weight:750;border-radius:999px;padding:4px 7px;background:#eef2f7;color:#475569;white-space:nowrap}
 .badge.done{background:#dcfce7;color:#166534}
-.bottom{padding:10px 12px;border-top:1px solid var(--line);background:#fff}
-#add{width:100%;padding:11px 14px;border:0;border-radius:11px;background:var(--accent);color:white;font-weight:700;cursor:pointer}
+.bottom{padding:9px 12px calc(9px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(255,255,255,.96);backdrop-filter:blur(8px)}
+#add{width:100%;padding:11px 14px;border:0;border-radius:12px;background:linear-gradient(135deg,#111827,#334155);color:white;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(15,23,42,.18)}
 #map{flex:1;height:100%}
 #openPanel{position:absolute;top:14px;left:14px;z-index:1100;display:none;background:#fff;color:#111827;border:1px solid #d1d5db}
 .leaflet-popup-content{font-size:13px}
@@ -96,10 +96,10 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
   }
   .top{padding:14px 14px 12px}
   .titleRow h1{font-size:20px}
-  .stats{gap:5px;margin:6px 0}
-  .stat{padding:5px 6px}
-  .stat b{font-size:15px}
-  .stat span{font-size:9px}
+  .stats{grid-template-columns:repeat(4,1fr);gap:4px;margin:6px 0}
+  .stat{padding:5px 4px}
+  .stat b{font-size:14px}
+  .stat span{font-size:8px}
   .controls{gap:6px}
   .filter{min-height:40px;padding:9px 12px;font-size:13px}
   #search{font-size:16px;min-height:44px;padding:11px 12px}
@@ -130,9 +130,10 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
         <button id="closePanel" class="iconBtn" title="Chiudi pannello">×</button>
       </div>
       <div class="stats">
-        <div class="stat"><b id="statTotal">0</b><span>Luoghi</span></div>
-        <div class="stat"><b id="statVisited">0</b><span>Visitati</span></div>
-        <div class="stat"><b id="statTodo">0</b><span>Da visitare</span></div>
+        <div class="stat stat-total"><b id="statTotal">0</b><span>Luoghi</span></div>
+        <div class="stat stat-visited"><b id="statVisited">0</b><span>Visitati</span></div>
+        <div class="stat stat-todo"><b id="statTodo">0</b><span>Da visitare</span></div>
+        <div class="stat stat-results"><b id="statResults">0</b><span>Risultati</span></div>
       </div>
       <div class="controls">
         <button class="filter active" data-filter="all">Tutti</button>
@@ -150,7 +151,7 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
         <button id="darkMode" title="Tema scuro">◐</button>
         <button id="exportMenu" title="Esporta CSV/GPX">⇩</button>
       </div>
-      <div class="legend">
+      <div id="filterSummary" style="display:none;margin-top:6px;padding:6px 8px;border-radius:9px;background:#f8fafc;border:1px solid var(--line);font-size:10px;color:var(--muted);font-weight:650"></div><div class="legend">
         <span><i class="dot pending"></i>Da visitare</span>
         <span><i class="dot visited"></i>Visitato</span>
       </div>
@@ -221,10 +222,13 @@ const greenIcon=L.icon({
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 
 function updateStats(){
-  const visited=places.filter(p=>p.visited).length;
+  const totalVisited=places.filter(p=>p.visited).length;
+  const filtered=places.filter(p=>passesFilter(p));
+  const filteredVisited=filtered.filter(p=>p.visited).length;
   document.querySelector("#statTotal").textContent=places.length;
-  document.querySelector("#statVisited").textContent=visited;
-  document.querySelector("#statTodo").textContent=places.length-visited;
+  document.querySelector("#statVisited").textContent=filtersActive()?filteredVisited:totalVisited;
+  document.querySelector("#statTodo").textContent=filtersActive()?filtered.length-filteredVisited:places.length-totalVisited;
+  document.querySelector("#statResults").textContent=filtered.length;
 }
 function passesFilter(p){
   if(activeFilter==="visited"&&!p.visited)return false;
@@ -295,6 +299,15 @@ function render(){
     list.appendChild(row);
   });
   updateStats();
+  const fs=document.querySelector("#filterSummary");
+  const labels=[];
+  if(activeFilter!=="all")labels.push(activeFilter==="visited"?"Visitati":"Da visitare");
+  if(activeArea!=="all")labels.push(activeArea);
+  if(activeCat!=="all")labels.push(activeCat);
+  const q=document.querySelector("#search").value.trim(); if(q)labels.push('“'+q+'”');
+  if(tripCenter)labels.push("Modalità viaggio");
+  fs.style.display=labels.length?"block":"none";
+  fs.textContent=labels.length?labels.join(" · ")+" · "+places.filter(p=>passesFilter(p)).length+" risultati":"";
   syncMarkerVisibility();
 }
 function focusListItem(id){
