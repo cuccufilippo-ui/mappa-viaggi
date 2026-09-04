@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0f172a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>Mappa Viaggi</title>
+<title>Mappa Viaggi</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon.svg"><meta name="apple-mobile-web-app-title" content="Mappa Viaggi">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--bg:#f4f6f8;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--visited:#16a34a;--pending:#2563eb;--highlight:#fff3b0}
@@ -290,6 +290,7 @@ document.querySelector("#add").addEventListener("click",async()=>{
 document.querySelector("#closePanel").addEventListener("click",()=>{document.querySelector("#panel").classList.add("closed");setTimeout(()=>map.invalidateSize(),260)});
 document.querySelector("#openPanel").addEventListener("click",()=>{document.querySelector("#panel").classList.remove("closed");setTimeout(()=>map.invalidateSize(),260)});
 load();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}))}
 </script>
 </body>
 </html>
