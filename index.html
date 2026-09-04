@@ -309,7 +309,7 @@ function render(){
     });
     row.addEventListener("click",()=>{
       const m=markers[p.id];
-      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id);if(window.innerWidth<=760){setTimeout(()=>{document.querySelector("#panel").classList.add("closed");map.invalidateSize()},180)}}
+      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id);if(window.innerWidth<=760){setTimeout(()=>{document.querySelector("#panel").classList.add("closed");syncMenuButton();map.invalidateSize()},180)}}
     });
     list.appendChild(row);
   });
