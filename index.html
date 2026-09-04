@@ -413,12 +413,19 @@ document.querySelector("#add").addEventListener("click",async()=>{
   places.push(data);buildSmartFilters();sortByNovara();render();
   if(!lat||!lon)await geocodeNew(data);else addMarker(data);
 });
+function syncMenuButton(){
+  const panel=document.querySelector("#panel"),btn=document.querySelector("#openPanel");
+  if(window.innerWidth<=760)btn.style.display=panel.classList.contains("closed")?"block":"none";
+  else btn.style.display="none";
+}
 document.querySelector("#closePanel").addEventListener("click",()=>{document.querySelector("#panel").classList.add("closed");setTimeout(()=>map.invalidateSize(),260)});
 document.querySelector("#openPanel").addEventListener("click",()=>{document.querySelector("#panel").classList.remove("closed");setTimeout(()=>map.invalidateSize(),260)});
 if(window.innerWidth<=760){
   document.querySelector("#panel").classList.add("closed");
   setTimeout(()=>map.invalidateSize(),50);
 }
+window.addEventListener("resize",syncMenuButton);
+syncMenuButton();
 load();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js?v=2",{updateViaCache:"none"}).catch(()=>{}))}
 </script>
