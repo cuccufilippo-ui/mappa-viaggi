@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0f172a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <title>Mappa Viaggi</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="icon.svg"><meta name="apple-mobile-web-app-title" content="Mappa Viaggi">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <style>
 :root{--bg:#f4f6f8;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--visited:#16a34a;--pending:#2563eb;--highlight:#fff3b0}
 *{box-sizing:border-box}
@@ -36,7 +38,20 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 .filter{border:1px solid var(--line);background:white;border-radius:999px;padding:7px 11px;font-size:12px;cursor:pointer}
 .filter.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 #search{width:100%;margin-top:10px;padding:10px 12px;border:1px solid #cfd4dc;border-radius:10px;font-size:14px}
-.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--muted)}
+.legend{display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--muted)}
+.smartControls{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.smartControls select,.smartControls button{min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:7px 8px;font-size:11px}
+.toolRow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:6px}
+.toolRow button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:9px;padding:7px 3px;font-size:15px;cursor:pointer}
+.distance{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.popupMeta{font-size:11px;color:#64748b;margin:4px 0 7px}
+body.dark{--bg:#07111f;--panel:#111827;--text:#f3f4f6;--muted:#9ca3af;--line:#374151;--accent:#2563eb;--highlight:#263449}
+body.dark .top,body.dark .bottom,body.dark .item{background:#111827}
+body.dark .item:hover{background:#172033}
+body.dark .stat,body.dark .num,body.dark .badge{background:#1f2937;color:#d1d5db}
+body.dark .badge.done{background:#14532d;color:#bbf7d0}
+body.dark #search,body.dark .iconBtn{background:#1f2937;color:#fff;border-color:#4b5563}
+body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background:#111827;color:#f3f4f6}
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
 .dot.pending{background:var(--pending)} .dot.visited{background:var(--visited)}
 #list{overflow:auto;flex:1;scroll-behavior:smooth}
@@ -125,17 +140,28 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
         <button class="filter" data-filter="todo">Da visitare</button>
       </div>
       <input id="search" type="search" placeholder="Cerca un luogo…">
+      <div class="smartControls">
+        <select id="areaFilter"><option value="all">🌍 Tutte le aree</option></select>
+        <select id="catFilter"><option value="all">🏷️ Tutte le categorie</option></select>
+      </div>
+      <div class="toolRow">
+        <button id="nearMe" title="Vicino a me">◎</button>
+        <button id="tripMode" title="Modalità viaggio">🏍️</button>
+        <button id="darkMode" title="Tema scuro">◐</button>
+        <button id="exportMenu" title="Esporta CSV/GPX">⇩</button>
+      </div>
       <div class="legend">
         <span><i class="dot pending"></i>Da visitare</span>
         <span><i class="dot visited"></i>Visitato</span>
       </div>
     </div>
     <div id="list"></div>
-    <div class="bottom"><button id="add">＋ Aggiungi luogo</button></div>
+    <div class="bottom"><button id="add">＋ Aggiungi / importa da Google Maps</button></div>
   </aside>
   <div id="map"></div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://stayygwqojrnsseckjrc.supabase.co";
@@ -145,7 +171,9 @@ const map=L.map("map",{worldCopyJump:true,zoomControl:false}).setView([45.4,9.2]
 L.control.zoom({position:window.innerWidth<=760?"bottomright":"topleft"}).addTo(map);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
 
-let places=[], markers={}, rowsById={}, activeFilter="all";
+let places=[], markers={}, rowsById={}, activeFilter="all",activeArea="all",activeCat="all",tripCenter=null,tripRadius=0,userMarker=null;
+const clusterGroup=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:48,spiderfyOnMaxZoom:true});
+map.addLayer(clusterGroup);
 const NOVARA={lat:45.44694,lon:8.62118};
 function distanceFromNovara(p){
   if(!p.lat||!p.lon)return Number.POSITIVE_INFINITY;
@@ -153,6 +181,29 @@ function distanceFromNovara(p){
   const dLat=toRad(p.lat-NOVARA.lat),dLon=toRad(p.lon-NOVARA.lon);
   const a=Math.sin(dLat/2)**2+Math.cos(toRad(NOVARA.lat))*Math.cos(toRad(p.lat))*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.sqrt(a));
+}
+function haversine(a,b){const R=6371,toRad=x=>x*Math.PI/180,dLat=toRad(b.lat-a.lat),dLon=toRad(b.lon-a.lon);const q=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(q))}
+function placeArea(p){
+  const x=+p.lon,y=+p.lat,n=(p.name||"").toLowerCase();
+  if(y>=35&&y<=47.5&&x>=6&&x<=19)return "Italia";
+  if(y>=42&&y<=51.5&&x>=-5.5&&x<=9)return "Francia";
+  if(y>=47&&y<=55.2&&x>=5.5&&x<=15.5)return "Germania";
+  if(y>=45.5&&y<=49.2&&x>=9.3&&x<=17.2)return "Austria";
+  if(y>=45.7&&y<=47.9&&x>=5.8&&x<=10.6)return "Svizzera";
+  if(y>=36&&y<=44.5&&x>=-10&&x<=4.5)return "Spagna";
+  if(y>=35&&y<=47&&x>=13&&x<=30)return "Balcani / Est Europa";
+  if(n.includes("sard")||n.includes("olbia")||n.includes("cagliari"))return "Sardegna";
+  return "Altri";
+}
+function placeCategory(p){
+  const n=(p.name+" "+(p.query||"")).toLowerCase();
+  if(/passo|col|pass|joch|gavia|stelvio|strada|route|road|gola|canyon|valico/.test(n))return "Strade e passi";
+  if(/castell|castle|château|burg|fort|rocca|palazzo/.test(n))return "Castelli e storia";
+  if(/spiaggia|beach|cala|mare|coast|costa|fjord|fiordo/.test(n))return "Mare e coste";
+  if(/lago|lake|see|cascat|waterfall|parco|park|mont|mount|grotta|cave/.test(n))return "Natura";
+  if(/muse|museum|monument|abbazia|chiesa|cathedral|duomo/.test(n))return "Cultura";
+  if(/ristor|restaurant|trattoria|bar|birr|brew|café|cafe/.test(n))return "Cibo";
+  return "Luoghi";
 }
 function sortByNovara(){
   places.sort((a,b)=>distanceFromNovara(a)-distanceFromNovara(b)||a.name.localeCompare(b.name,"it"));
@@ -178,6 +229,9 @@ function updateStats(){
 function passesFilter(p){
   if(activeFilter==="visited"&&!p.visited)return false;
   if(activeFilter==="todo"&&p.visited)return false;
+  if(activeArea!=="all"&&placeArea(p)!==activeArea)return false;
+  if(activeCat!=="all"&&placeCategory(p)!==activeCat)return false;
+  if(tripCenter&&tripRadius&&haversine(tripCenter,{lat:+p.lat,lon:+p.lon})>tripRadius)return false;
   const q=document.querySelector("#search").value.trim().toLowerCase();
   return !q||p.name.toLowerCase().includes(q);
 }
@@ -186,8 +240,8 @@ function syncMarkerVisibility(){
     const m=markers[p.id];
     if(!m)continue;
     const show=passesFilter(p);
-    if(show&&!map.hasLayer(m))m.addTo(map);
-    if(!show&&map.hasLayer(m))map.removeLayer(m);
+    if(show&&!clusterGroup.hasLayer(m))clusterGroup.addLayer(m);
+    if(!show&&clusterGroup.hasLayer(m))clusterGroup.removeLayer(m);
   }
 }
 function syncMarker(p){
@@ -205,7 +259,7 @@ function render(){
     const idx=places.indexOf(p)+1;
     row.innerHTML=`<input type="checkbox" ${p.visited?"checked":""}>
       <span class="num">${idx}</span>
-      <span class="name ${p.visited?"done":""}">${esc(p.name)}</span>
+      <span class="name ${p.visited?"done":""}">${esc(p.name)}<span class="distance">${Math.round(distanceFromNovara(p))} km da Novara · ${esc(placeCategory(p))}</span></span>
       <span class="badge ${p.visited?"done":""}">${p.visited?"Visitato":"Da visitare"}</span>`;
     const cb=row.querySelector("input");
     cb.addEventListener("click",e=>e.stopPropagation());
@@ -252,10 +306,10 @@ function addMarker(p){
       el.style.animationDelay=(Math.random()*.35)+"s";
     }
   });
-  m.bindPopup(`<b>${esc(p.name)}</b><br><span>${p.visited?"✅ Visitato":"📍 Da visitare"}</span><br><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.query||p.name)}">Apri in Google Maps</a>`);
+  m.bindPopup(`<b>${esc(p.name)}</b><div class="popupMeta">${p.visited?"✅ Visitato":"📍 Da visitare"} · ${Math.round(distanceFromNovara(p))} km da Novara<br>${esc(placeCategory(p))} · ${esc(placeArea(p))}</div><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((p.lat&&p.lon)?p.lat+","+p.lon:(p.query||p.name))}">🧭 Apri in Google Maps</a>`);
   m.on("click",()=>focusListItem(p.id));
   markers[p.id]=m;
-  if(passesFilter(p))m.addTo(map);
+  if(passesFilter(p))clusterGroup.addLayer(m);
 }
 async function geocodeNew(p){
   try{
@@ -272,11 +326,51 @@ async function load(){
   const {data,error}=await sb.from("places").select("*").order("id");
   if(error){document.querySelector("#list").innerHTML='<div class="empty">Errore database: '+esc(error.message)+'</div>';return}
   places=data||[];
+  buildSmartFilters();
   sortByNovara();
   render();
   map.setView([45.4,9.2],6,{animate:false});
   places.forEach((p,i)=>setTimeout(()=>addMarker(p),900+Math.min(i*5,950)));
 }
+function buildSmartFilters(){
+  const areas=[...new Set(places.map(placeArea))].sort(),cats=[...new Set(places.map(placeCategory))].sort();
+  const a=document.querySelector("#areaFilter"),k=document.querySelector("#catFilter");
+  a.innerHTML='<option value="all">🌍 Tutte le aree</option>'+areas.map(x=>'<option>'+esc(x)+'</option>').join("");
+  k.innerHTML='<option value="all">🏷️ Tutte le categorie</option>'+cats.map(x=>'<option>'+esc(x)+'</option>').join("");
+}
+document.querySelector("#areaFilter").addEventListener("change",e=>{activeArea=e.target.value;render()});
+document.querySelector("#catFilter").addEventListener("change",e=>{activeCat=e.target.value;render()});
+document.querySelector("#nearMe").addEventListener("click",()=>{
+  if(!navigator.geolocation){alert("Geolocalizzazione non disponibile");return}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const ll=[pos.coords.latitude,pos.coords.longitude];
+    map.setView(ll,10);
+    if(userMarker)map.removeLayer(userMarker);
+    userMarker=L.circleMarker(ll,{radius:8,weight:3,color:"#fff",fillColor:"#2563eb",fillOpacity:1}).addTo(map).bindPopup("📍 La tua posizione").openPopup();
+  },()=>alert("Consenti l'accesso alla posizione per usare Vicino a me."),{enableHighAccuracy:true,timeout:10000});
+});
+document.querySelector("#tripMode").addEventListener("click",()=>{
+  if(tripCenter){tripCenter=null;tripRadius=0;document.querySelector("#tripMode").textContent="🏍️";render();return}
+  const km=Number(prompt("Raggio della modalità viaggio in km (es. 100):","100"));
+  if(!km||km<1)return;
+  const cc=map.getCenter();tripCenter={lat:cc.lat,lon:cc.lng};tripRadius=km;
+  document.querySelector("#tripMode").textContent="🏍️✓";render();
+  alert("Modalità viaggio attiva: mostro i luoghi entro "+km+" km dal centro attuale della mappa. Premi di nuovo 🏍️ per disattivarla.");
+});
+document.querySelector("#darkMode").addEventListener("click",()=>{document.body.classList.toggle("dark");localStorage.setItem("mv-dark",document.body.classList.contains("dark")?"1":"0")});
+if(localStorage.getItem("mv-dark")==="1")document.body.classList.add("dark");
+function downloadText(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+document.querySelector("#exportMenu").addEventListener("click",()=>{
+  const fmt=(prompt("Esporta in formato CSV o GPX?","GPX")||"").trim().toUpperCase();
+  const data=places.filter(p=>passesFilter(p)&&p.lat&&p.lon);
+  if(fmt==="CSV"){
+    const rows=[["Nome","Latitudine","Longitudine","Stato","Categoria","Area"],...data.map(p=>[p.name,p.lat,p.lon,p.visited?"Visitato":"Da visitare",placeCategory(p),placeArea(p)])];
+    downloadText("mappa-viaggi.csv",rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n"),"text/csv");
+  }else if(fmt==="GPX"){
+    const xml='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Mappa Viaggi" xmlns="http://www.topografix.com/GPX/1/1">'+data.map(p=>'<wpt lat="'+p.lat+'" lon="'+p.lon+'"><name>'+esc(p.name)+'</name><desc>'+(p.visited?"Visitato":"Da visitare")+' - '+esc(placeCategory(p))+'</desc></wpt>').join("")+'</gpx>';
+    downloadText("mappa-viaggi.gpx",xml,"application/gpx+xml");
+  }
+});
 document.querySelector("#search").addEventListener("input",render);
 document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{
   activeFilter=btn.dataset.filter;
@@ -284,12 +378,25 @@ document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",(
   render();
 }));
 document.querySelector("#add").addEventListener("click",async()=>{
-  const name=prompt("Nome del nuovo luogo:");
-  if(!name)return;
-  const q=prompt("Località/indirizzo per posizionarlo sulla mappa:",name);
-  const {data,error}=await sb.from("places").insert({name,query:q||name}).select().single();
+  const first=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
+  if(!first)return;
+  let name=first,lat=null,lon=null,q=first;
+  if(/^https?:\/\//i.test(first)){
+    try{
+      const rr=await fetch(SUPABASE_URL+"/functions/v1/resolve-google-maps?url="+encodeURIComponent(first));
+      const d=await rr.json();lat=d.lat;lon=d.lon;name=d.name||"";
+      name=prompt("Nome del luogo:",name||"")||name;
+      if(!name)return;
+      q=first;
+    }catch(e){alert("Non sono riuscito a leggere automaticamente il link. Inserisci il luogo manualmente.");return}
+  }else{
+    q=prompt("Località/indirizzo per posizionarlo sulla mappa:",first)||first;
+  }
+  const payload={name,query:q};if(lat&&lon){payload.lat=lat;payload.lon=lon}
+  const {data,error}=await sb.from("places").insert(payload).select().single();
   if(error){alert("Errore: "+error.message);return}
-  places.push(data); sortByNovara(); render(); await geocodeNew(data); sortByNovara(); render();
+  places.push(data);buildSmartFilters();sortByNovara();render();
+  if(!lat||!lon)await geocodeNew(data);else addMarker(data);
 });
 document.querySelector("#closePanel").addEventListener("click",()=>{document.querySelector("#panel").classList.add("closed");setTimeout(()=>map.invalidateSize(),260)});
 document.querySelector("#openPanel").addEventListener("click",()=>{document.querySelector("#panel").classList.remove("closed");setTimeout(()=>map.invalidateSize(),260)});
