@@ -430,7 +430,7 @@ document.querySelector("#add").addEventListener("click",async()=>{
       const d=await rr.json();lat=d.lat;lon=d.lon;name=d.name||"";
       name=prompt("Nome del luogo:",name||"")||name;
       if(!name)return;
-      q=first;
+      q=d.queryText||d.name||name;
     }catch(e){alert("Non sono riuscito a leggere automaticamente il link. Inserisci il luogo manualmente.");return}
   }else{
     q=prompt("Località/indirizzo per posizionarlo sulla mappa:",first)||first;
