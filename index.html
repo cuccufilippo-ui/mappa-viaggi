@@ -348,7 +348,7 @@ async function load(){
   places.forEach((p,i)=>setTimeout(()=>addMarker(p),900+Math.min(i*5,950)));
 }
 function buildSmartFilters(){
-  const areas=[...new Set(places.map(placeArea))].sort((a,b)=>a==="Altri"?1:b==="Altri"?-1:a.localeCompare(b,"it")),cats=[...new Set(places.map(placeCategory))].sort((a,b)=>a.localeCompare(b,"it"));
+  const areas=[...new Set(places.map(placeArea))].sort((a,b)=>a==="Italia"?-1:b==="Italia"?1:a==="Altri"?1:b==="Altri"?-1:a.localeCompare(b,"it")),cats=[...new Set(places.map(placeCategory))].sort((a,b)=>a.localeCompare(b,"it"));
   const a=document.querySelector("#areaFilter"),k=document.querySelector("#catFilter");
   a.innerHTML='<option value="all">🌍 Tutte le aree</option>'+areas.map(x=>'<option>'+esc(x)+'</option>').join("");
   k.innerHTML='<option value="all">🏷️ Tutte le categorie</option>'+cats.map(x=>'<option>'+esc(x)+'</option>').join("");
