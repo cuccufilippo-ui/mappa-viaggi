@@ -133,7 +133,7 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
         <div class="stat stat-total"><b id="statTotal">0</b><span>Luoghi</span></div>
         <div class="stat stat-visited"><b id="statVisited">0</b><span>Visitati</span></div>
         <div class="stat stat-todo"><b id="statTodo">0</b><span>Da visitare</span></div>
-        <div class="stat stat-results"><b id="statResults">0</b><span>Risultati</span></div>
+        <div class="stat stat-results"><b id="statResults">0</b><span id="statResultsLabel">Risultati</span></div>
       </div>
       <div class="controls">
         <button class="filter active" data-filter="all">Tutti</button>
@@ -228,7 +228,23 @@ function updateStats(){
   document.querySelector("#statTotal").textContent=places.length;
   document.querySelector("#statVisited").textContent=filtersActive()?filteredVisited:totalVisited;
   document.querySelector("#statTodo").textContent=filtersActive()?filtered.length-filteredVisited:places.length-totalVisited;
-  document.querySelector("#statResults").textContent=filtered.length;
+
+  // Il quarto contatore ignora volutamente Tutti/Visitati/Da visitare.
+  const q=document.querySelector("#search").value.trim().toLowerCase();
+  const resultPlaces=places.filter(p=>{
+    if(activeArea!=="all"&&placeArea(p)!==activeArea)return false;
+    if(activeCat!=="all"&&placeCategory(p)!==activeCat)return false;
+    if(tripCenter&&tripRadius&&haversine(tripCenter,{lat:+p.lat,lon:+p.lon})>tripRadius)return false;
+    return !q||p.name.toLowerCase().includes(q);
+  });
+  document.querySelector("#statResults").textContent=resultPlaces.length;
+
+  let label="Risultati";
+  if(activeCat!=="all")label=activeCat;
+  else if(activeArea!=="all")label=activeArea;
+  else if(q)label="Ricerca";
+  else if(tripCenter)label="Viaggio";
+  document.querySelector("#statResultsLabel").textContent=label;
 }
 function passesFilter(p){
   if(activeFilter==="visited"&&!p.visited)return false;
