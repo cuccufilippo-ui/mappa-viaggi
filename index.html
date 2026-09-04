@@ -14,7 +14,7 @@ body{overflow:hidden;opacity:0;animation:appFade .55s ease-out forwards}
 @keyframes panelIn{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
 @keyframes statIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes itemIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes markerPop{0%{transform:translateY(-35px) scale(.15);opacity:0}55%{transform:translateY(4px) scale(1.22);opacity:1}75%{transform:translateY(-7px) scale(.92)}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes markerPop{0%{opacity:0;filter:drop-shadow(0 0 0 rgba(0,0,0,0))}45%{opacity:1;filter:drop-shadow(0 8px 7px rgba(0,0,0,.35))}100%{opacity:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}}
 @keyframes splashGlobe{0%{transform:scale(.25) rotate(-25deg);opacity:0}55%{transform:scale(1.18) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes splashOut{0%{opacity:1;visibility:visible}80%{opacity:1}100%{opacity:0;visibility:hidden;pointer-events:none}}
 #splash{position:fixed;inset:0;z-index:99999;background:linear-gradient(145deg,#0f172a,#1e3a5f);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;animation:splashOut 1.9s ease forwards}
@@ -208,8 +208,7 @@ function addMarker(p){
   m.on("add",()=>{
     const el=m.getElement();
     if(el){
-      el.style.transformOrigin="50% 100%";
-      el.style.animation="markerPop .68s cubic-bezier(.2,.8,.2,1) both";
+      el.style.animation="markerPop .68s ease-out both";
       el.style.animationDelay=(Math.random()*.35)+"s";
     }
   });
