@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#0f172a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <title>Mappa Viaggi</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
@@ -57,11 +57,46 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 .leaflet-popup-content b{font-size:14px}
 .empty{padding:20px;color:var(--muted);text-align:center;font-size:13px}
 @media(max-width:760px){
-  #app{display:block}
-  #map{height:100%}
-  aside{position:absolute;left:0;top:0;bottom:0;width:min(92vw,390px);max-width:none;box-shadow:8px 0 25px rgba(0,0,0,.12)}
-  aside.closed{transform:translateX(-102%)}
-  #openPanel{display:block}
+  html,body{height:100dvh;overscroll-behavior:none}
+  #app{display:block;height:100dvh}
+  #map{height:100dvh}
+  aside{
+    position:absolute;left:0;top:0;bottom:0;
+    width:min(94vw,410px);max-width:none;
+    box-shadow:8px 0 25px rgba(0,0,0,.16);
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom)
+  }
+  aside.closed{transform:translateX(-103%)}
+  #openPanel{
+    display:block;
+    top:calc(12px + env(safe-area-inset-top));
+    left:calc(12px + env(safe-area-inset-left));
+    width:46px;height:46px;border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.18)
+  }
+  .top{padding:14px 14px 12px}
+  .titleRow h1{font-size:20px}
+  .stats{gap:7px;margin:10px 0}
+  .stat{padding:9px 8px}
+  .stat b{font-size:17px}
+  .stat span{font-size:10px}
+  .controls{gap:6px}
+  .filter{min-height:40px;padding:9px 12px;font-size:13px}
+  #search{font-size:16px;min-height:44px;padding:11px 12px}
+  .item{min-height:52px;padding:11px 12px}
+  .item input{width:20px;height:20px}
+  .name{font-size:14px}
+  .badge{font-size:10px}
+  #add{min-height:46px;font-size:15px}
+  .iconBtn{min-width:44px;min-height:44px}
+  .leaflet-control-zoom a{width:42px;height:42px;line-height:42px;font-size:22px}
+  .leaflet-control-attribution{font-size:9px}
+}
+
+@media(max-width:900px) and (orientation:landscape){
+  aside{width:min(58vw,390px)}
+  .stats{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
@@ -181,7 +216,7 @@ function render(){
     });
     row.addEventListener("click",()=>{
       const m=markers[p.id];
-      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id)}
+      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id);if(window.innerWidth<=760){setTimeout(()=>{document.querySelector("#panel").classList.add("closed");map.invalidateSize()},180)}}
     });
     list.appendChild(row);
   });
@@ -252,8 +287,8 @@ document.querySelector("#add").addEventListener("click",async()=>{
   if(error){alert("Errore: "+error.message);return}
   places.push(data); sortByNovara(); render(); await geocodeNew(data); sortByNovara(); render();
 });
-document.querySelector("#closePanel").addEventListener("click",()=>document.querySelector("#panel").classList.add("closed"));
-document.querySelector("#openPanel").addEventListener("click",()=>document.querySelector("#panel").classList.remove("closed"));
+document.querySelector("#closePanel").addEventListener("click",()=>{document.querySelector("#panel").classList.add("closed");setTimeout(()=>map.invalidateSize(),260)});
+document.querySelector("#openPanel").addEventListener("click",()=>{document.querySelector("#panel").classList.remove("closed");setTimeout(()=>map.invalidateSize(),260)});
 load();
 </script>
 </body>
