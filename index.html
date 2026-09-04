@@ -93,6 +93,17 @@ const map=L.map("map",{worldCopyJump:true}).setView([35,10],3);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
 
 let places=[], markers={}, rowsById={}, activeFilter="all";
+const NOVARA={lat:45.44694,lon:8.62118};
+function distanceFromNovara(p){
+  if(!p.lat||!p.lon)return Number.POSITIVE_INFINITY;
+  const R=6371,toRad=x=>x*Math.PI/180;
+  const dLat=toRad(p.lat-NOVARA.lat),dLon=toRad(p.lon-NOVARA.lon);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(NOVARA.lat))*Math.cos(toRad(p.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function sortByNovara(){
+  places.sort((a,b)=>distanceFromNovara(a)-distanceFromNovara(b)||a.name.localeCompare(b.name,"it"));
+}
 const blueIcon=L.icon({
   iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
   shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
@@ -201,6 +212,7 @@ async function load(){
   const {data,error}=await sb.from("places").select("*").order("id");
   if(error){document.querySelector("#list").innerHTML='<div class="empty">Errore database: '+esc(error.message)+'</div>';return}
   places=data||[];
+  sortByNovara();
   places.forEach(addMarker);
   render();
 }
@@ -216,7 +228,7 @@ document.querySelector("#add").addEventListener("click",async()=>{
   const q=prompt("Località/indirizzo per posizionarlo sulla mappa:",name);
   const {data,error}=await sb.from("places").insert({name,query:q||name}).select().single();
   if(error){alert("Errore: "+error.message);return}
-  places.push(data); render(); await geocodeNew(data);
+  places.push(data); sortByNovara(); render(); await geocodeNew(data); sortByNovara(); render();
 });
 document.querySelector("#closePanel").addEventListener("click",()=>document.querySelector("#panel").classList.add("closed"));
 document.querySelector("#openPanel").addEventListener("click",()=>document.querySelector("#panel").classList.remove("closed"));
