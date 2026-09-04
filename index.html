@@ -235,13 +235,28 @@ function passesFilter(p){
   const q=document.querySelector("#search").value.trim().toLowerCase();
   return !q||p.name.toLowerCase().includes(q);
 }
+function filtersActive(){
+  const q=document.querySelector("#search").value.trim();
+  return activeFilter!=="all"||activeArea!=="all"||activeCat!=="all"||!!q||!!tripCenter;
+}
 function syncMarkerVisibility(){
-  for(const p of places){
-    const m=markers[p.id];
-    if(!m)continue;
-    const show=passesFilter(p);
-    if(show&&!clusterGroup.hasLayer(m))clusterGroup.addLayer(m);
-    if(!show&&clusterGroup.hasLayer(m))clusterGroup.removeLayer(m);
+  const useClusters=filtersActive();
+  if(useClusters){
+    for(const p of places){
+      const m=markers[p.id]; if(!m)continue;
+      if(map.hasLayer(m))map.removeLayer(m);
+      const show=passesFilter(p);
+      if(show&&!clusterGroup.hasLayer(m))clusterGroup.addLayer(m);
+      if(!show&&clusterGroup.hasLayer(m))clusterGroup.removeLayer(m);
+    }
+    if(!map.hasLayer(clusterGroup))map.addLayer(clusterGroup);
+  }else{
+    if(map.hasLayer(clusterGroup))map.removeLayer(clusterGroup);
+    clusterGroup.clearLayers();
+    for(const p of places){
+      const m=markers[p.id]; if(!m)continue;
+      if(!map.hasLayer(m))m.addTo(map);
+    }
   }
 }
 function syncMarker(p){
@@ -309,7 +324,7 @@ function addMarker(p){
   m.bindPopup(`<b>${esc(p.name)}</b><div class="popupMeta">${p.visited?"✅ Visitato":"📍 Da visitare"} · ${Math.round(distanceFromNovara(p))} km da Novara<br>${esc(placeCategory(p))} · ${esc(placeArea(p))}</div><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((p.lat&&p.lon)?p.lat+","+p.lon:(p.query||p.name))}">🧭 Apri in Google Maps</a>`);
   m.on("click",()=>focusListItem(p.id));
   markers[p.id]=m;
-  if(passesFilter(p))clusterGroup.addLayer(m);
+  if(filtersActive()){if(passesFilter(p))clusterGroup.addLayer(m)}else{m.addTo(map)}
 }
 async function geocodeNew(p){
   try{
@@ -333,7 +348,7 @@ async function load(){
   places.forEach((p,i)=>setTimeout(()=>addMarker(p),900+Math.min(i*5,950)));
 }
 function buildSmartFilters(){
-  const areas=[...new Set(places.map(placeArea))].sort(),cats=[...new Set(places.map(placeCategory))].sort();
+  const areas=[...new Set(places.map(placeArea))].sort((a,b)=>a==="Altri"?1:b==="Altri"?-1:a.localeCompare(b,"it")),cats=[...new Set(places.map(placeCategory))].sort((a,b)=>a.localeCompare(b,"it"));
   const a=document.querySelector("#areaFilter"),k=document.querySelector("#catFilter");
   a.innerHTML='<option value="all">🌍 Tutte le aree</option>'+areas.map(x=>'<option>'+esc(x)+'</option>').join("");
   k.innerHTML='<option value="all">🏷️ Tutte le categorie</option>'+cats.map(x=>'<option>'+esc(x)+'</option>').join("");
