@@ -52,7 +52,7 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 .bottom{padding:10px 12px;border-top:1px solid var(--line);background:#fff}
 #add{width:100%;padding:11px 14px;border:0;border-radius:11px;background:var(--accent);color:white;font-weight:700;cursor:pointer}
 #map{flex:1;height:100%}
-#openPanel{position:absolute;top:14px;left:14px;z-index:1100;display:none}
+#openPanel{position:absolute;top:14px;left:14px;z-index:1100;display:none;background:#fff;color:#111827;border:1px solid #d1d5db}
 .leaflet-popup-content{font-size:13px}
 .leaflet-popup-content b{font-size:14px}
 .empty{padding:20px;color:var(--muted);text-align:center;font-size:13px}
@@ -67,9 +67,9 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
     padding-top:env(safe-area-inset-top);
     padding-bottom:env(safe-area-inset-bottom)
   }
-  aside.closed{transform:translateX(-103%)}
+  aside.closed{transform:translateX(-103%);pointer-events:none}
   #openPanel{
-    display:block;
+    display:block;pointer-events:auto;
     top:calc(12px + env(safe-area-inset-top));
     left:calc(12px + env(safe-area-inset-left));
     width:46px;height:46px;border-radius:14px;
@@ -289,6 +289,10 @@ document.querySelector("#add").addEventListener("click",async()=>{
 });
 document.querySelector("#closePanel").addEventListener("click",()=>{document.querySelector("#panel").classList.add("closed");setTimeout(()=>map.invalidateSize(),260)});
 document.querySelector("#openPanel").addEventListener("click",()=>{document.querySelector("#panel").classList.remove("closed");setTimeout(()=>map.invalidateSize(),260)});
+if(window.innerWidth<=760){
+  document.querySelector("#panel").classList.add("closed");
+  setTimeout(()=>map.invalidateSize(),50);
+}
 load();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(()=>{}))}
 </script>
