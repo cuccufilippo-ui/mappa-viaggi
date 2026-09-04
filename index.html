@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>Mappa Viaggi in Moto</title>
+<title>Mappa Viaggi</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--bg:#f4f6f8;--panel:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--accent:#111827;--visited:#16a34a;--pending:#2563eb;--highlight:#fff3b0}
@@ -18,9 +18,9 @@ body{overflow:hidden;opacity:0;animation:appFade .55s ease-out forwards}
 @keyframes splashGlobe{0%{transform:scale(.25) rotate(-25deg);opacity:0}55%{transform:scale(1.18) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes splashOut{0%{opacity:1;visibility:visible}80%{opacity:1}100%{opacity:0;visibility:hidden;pointer-events:none}}
 #splash{position:fixed;inset:0;z-index:99999;background:linear-gradient(145deg,#0f172a,#1e3a5f);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;animation:splashOut 1.9s ease forwards}
-#splash .globe{font-size:88px;filter:drop-shadow(0 12px 25px rgba(0,0,0,.35));animation:splashGlobe .8s cubic-bezier(.2,.85,.25,1.2) both}
+#splash .globe{font-size:74px;filter:drop-shadow(0 12px 25px rgba(0,0,0,.35));animation:splashGlobe .8s cubic-bezier(.2,.85,.25,1.2) both}
 #splash .sTitle{font-size:27px;font-weight:850;margin-top:13px;letter-spacing:-.03em;animation:statIn .5s .45s both}
-#splash .sSub{font-size:12px;opacity:.72;margin-top:5px;letter-spacing:.14em;text-transform:uppercase;animation:statIn .5s .6s both}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 #app{height:100%;display:flex}
 aside{width:390px;max-width:44vw;background:var(--panel);display:flex;flex-direction:column;border-right:1px solid var(--line);z-index:1000;transition:transform .25s ease;animation:panelIn .55s ease-out .08s both}
@@ -66,13 +66,13 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 </style>
 </head>
 <body>
-<div id="splash"><div class="globe">🏍️</div><div class="sTitle">Mappa Viaggi</div><div class="sSub">ROAD TRIPS · 225 LUOGHI DA SCOPRIRE</div></div>
+<div id="splash"><div class="globe">🌍 🏍️</div><div class="sTitle">Mappa Viaggi</div></div>
 <div id="app">
   <button id="openPanel" class="iconBtn">☰</button>
   <aside id="panel">
     <div class="top">
       <div class="titleRow">
-        <div><h1>🏍️ Mappa Viaggi</h1><div style="font-size:11px;color:#6b7280;margin-top:3px">ROAD TRIPS IN MOTO · 225 LUOGHI</div></div>
+        <div><h1>🌍 🏍️ Mappa Viaggi</h1></div>
         <button id="closePanel" class="iconBtn" title="Chiudi pannello">×</button>
       </div>
       <div class="stats">
