@@ -65,8 +65,12 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
     width:min(94vw,410px);max-width:none;
     box-shadow:8px 0 25px rgba(0,0,0,.16);
     padding-top:env(safe-area-inset-top);
-    padding-bottom:env(safe-area-inset-bottom)
+    padding-bottom:env(safe-area-inset-bottom);
+    animation:none!important;
+    transform:translateX(-103%);
+    pointer-events:none
   }
+  aside:not(.closed){transform:translateX(0);pointer-events:auto}
   aside.closed{transform:translateX(-103%);pointer-events:none}
   #openPanel{
     display:block;pointer-events:auto;
