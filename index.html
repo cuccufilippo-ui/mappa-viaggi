@@ -14,7 +14,13 @@ body{overflow:hidden;opacity:0;animation:appFade .55s ease-out forwards}
 @keyframes panelIn{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:translateX(0)}}
 @keyframes statIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes itemIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes markerPop{0%{transform:scale(.35);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes markerPop{0%{transform:translateY(-35px) scale(.15);opacity:0}55%{transform:translateY(4px) scale(1.22);opacity:1}75%{transform:translateY(-7px) scale(.92)}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes splashGlobe{0%{transform:scale(.25) rotate(-25deg);opacity:0}55%{transform:scale(1.18) rotate(8deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes splashOut{0%{opacity:1;visibility:visible}80%{opacity:1}100%{opacity:0;visibility:hidden;pointer-events:none}}
+#splash{position:fixed;inset:0;z-index:99999;background:linear-gradient(145deg,#0f172a,#1e3a5f);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;animation:splashOut 1.9s ease forwards}
+#splash .globe{font-size:82px;filter:drop-shadow(0 12px 25px rgba(0,0,0,.35));animation:splashGlobe .8s cubic-bezier(.2,.85,.25,1.2) both}
+#splash .sTitle{font-size:27px;font-weight:850;margin-top:13px;letter-spacing:-.03em;animation:statIn .5s .45s both}
+#splash .sSub{font-size:12px;opacity:.72;margin-top:5px;letter-spacing:.14em;text-transform:uppercase;animation:statIn .5s .6s both}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 #app{height:100%;display:flex}
 aside{width:390px;max-width:44vw;background:var(--panel);display:flex;flex-direction:column;border-right:1px solid var(--line);z-index:1000;transition:transform .25s ease;animation:panelIn .55s ease-out .08s both}
@@ -60,6 +66,7 @@ h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.02em}
 </style>
 </head>
 <body>
+<div id="splash"><div class="globe">🌍</div><div class="sTitle">Mappa Viaggi</div><div class="sSub">225 luoghi da scoprire</div></div>
 <div id="app">
   <button id="openPanel" class="iconBtn">☰</button>
   <aside id="panel">
@@ -202,7 +209,7 @@ function addMarker(p){
     const el=m.getElement();
     if(el){
       el.style.transformOrigin="50% 100%";
-      el.style.animation="markerPop .42s cubic-bezier(.2,.8,.2,1) both";
+      el.style.animation="markerPop .68s cubic-bezier(.2,.8,.2,1) both";
       el.style.animationDelay=(Math.random()*.35)+"s";
     }
   });
@@ -229,8 +236,8 @@ async function load(){
   sortByNovara();
   render();
   map.setView([45.44694,8.62118],5,{animate:false});
-  setTimeout(()=>map.flyTo([43,8],3,{duration:1.15}),180);
-  places.forEach((p,i)=>setTimeout(()=>addMarker(p),Math.min(i*8,900)));
+  setTimeout(()=>map.flyTo([43,8],3,{duration:1.65}),850);
+  places.forEach((p,i)=>setTimeout(()=>addMarker(p),900+Math.min(i*5,950)));
 }
 document.querySelector("#search").addEventListener("input",render);
 document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{
