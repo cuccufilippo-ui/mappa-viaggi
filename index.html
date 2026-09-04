@@ -440,7 +440,34 @@ document.querySelector("#add").addEventListener("click",async()=>{
   if(error){alert("Errore: "+error.message);return}
   places.push(data);buildSmartFilters();sortByNovara();render();
   if(!lat||!lon)await geocodeNew(data);else addMarker(data);
+  sortByNovara();render();syncMarkerVisibility();
+  const nm=markers[data.id];
+  if(nm){map.setView(nm.getLatLng(),Math.max(map.getZoom(),8));nm.openPopup();}
 });
+// Aggiornamento in tempo reale: nuovi luoghi e modifiche compaiono senza ricaricare.
+sb.channel("places-live")
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"places"},payload=>{
+    const p=payload.new;
+    if(places.some(x=>x.id===p.id))return;
+    places.push(p);buildSmartFilters();sortByNovara();
+    if(p.lat&&p.lon)addMarker(p);
+    render();syncMarkerVisibility();
+  })
+  .on("postgres_changes",{event:"UPDATE",schema:"public",table:"places"},payload=>{
+    const i=places.findIndex(x=>x.id===payload.new.id);
+    if(i<0)return;
+    places[i]=payload.new;
+    const oldMarker=markers[payload.new.id];
+    if(oldMarker){
+      clusterGroup.removeLayer(oldMarker);
+      if(map.hasLayer(oldMarker))map.removeLayer(oldMarker);
+      delete markers[payload.new.id];
+    }
+    if(payload.new.lat&&payload.new.lon)addMarker(payload.new);
+    buildSmartFilters();sortByNovara();render();syncMarkerVisibility();
+  })
+  .subscribe();
+
 function syncMenuButton(){
   const panel=document.querySelector("#panel"),btn=document.querySelector("#openPanel");
   if(window.innerWidth<=760)btn.style.display=panel.classList.contains("closed")?"block":"none";
