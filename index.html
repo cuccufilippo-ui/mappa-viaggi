@@ -87,8 +87,7 @@ body.dark .leaflet-popup-content-wrapper,body.dark .leaflet-popup-tip{background
   }
   aside:not(.closed){transform:translateX(0);pointer-events:auto}
   aside.closed{transform:translateX(-103%);pointer-events:none}
-  #openPanel{
-    display:block;pointer-events:auto;
+  #openPanel{display:none;pointer-events:auto;
     top:calc(12px + env(safe-area-inset-top));
     left:calc(12px + env(safe-area-inset-left));
     width:46px;height:46px;border-radius:14px;
@@ -310,147 +309,9 @@ function render(){
     });
     row.addEventListener("click",()=>{
       const m=markers[p.id];
-      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id);if(window.innerWidth<=760){setTimeout(()=>{document.querySelector("#panel").classList.add("closed");map.invalidateSize()},180)}}
-    });
-    list.appendChild(row);
-  });
-  updateStats();
-  const fs=document.querySelector("#filterSummary");
-  const labels=[];
-  if(activeFilter!=="all")labels.push(activeFilter==="visited"?"Visitati":"Da visitare");
-  if(activeArea!=="all")labels.push(activeArea);
-  if(activeCat!=="all")labels.push(activeCat);
-  const q=document.querySelector("#search").value.trim(); if(q)labels.push('“'+q+'”');
-  if(tripCenter)labels.push("Modalità viaggio");
-  fs.style.display=labels.length?"block":"none";
-  fs.textContent=labels.length?labels.join(" · ")+" · "+places.filter(p=>passesFilter(p)).length+" risultati":"";
-  syncMarkerVisibility();
-}
-function focusListItem(id){
-  document.querySelectorAll(".item.active").forEach(el=>el.classList.remove("active"));
-  const p=places.find(x=>x.id===id);
-  if(!p)return;
-  if(!passesFilter(p)){
-    activeFilter="all";
-    document.querySelectorAll(".filter").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));
-    document.querySelector("#search").value="";
-    render();
-  }
-  const row=rowsById[id]||document.querySelector('.item[data-place-id="'+id+'"]');
-  if(row){row.classList.add("active");row.scrollIntoView({behavior:"smooth",block:"center"})}
-  if(window.innerWidth<=760)document.querySelector("#panel").classList.remove("closed");
-}
-function addMarker(p){
-  if(!p.lat||!p.lon||markers[p.id])return;
-  const m=L.marker([p.lat,p.lon],{icon:p.visited?greenIcon:blueIcon});
-  m.on("add",()=>{
-    const el=m.getElement();
-    if(el){
-      el.style.animation="markerPop .68s ease-out both";
-      el.style.animationDelay=(Math.random()*.35)+"s";
-    }
-  });
-  m.bindPopup(`<b>${esc(p.name)}</b><div class="popupMeta">${p.visited?"✅ Visitato":"📍 Da visitare"} · ${Math.round(distanceFromNovara(p))} km da Novara<br>${esc(placeCategory(p))} · ${esc(placeArea(p))}</div><a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((p.lat&&p.lon)?p.lat+","+p.lon:(p.query||p.name))}">🧭 Apri in Google Maps</a>`);
-  m.on("click",()=>focusListItem(p.id));
-  markers[p.id]=m;
-  if(filtersActive()){if(passesFilter(p))clusterGroup.addLayer(m)}else{m.addTo(map)}
-}
-async function geocodeNew(p){
-  try{
-    const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+encodeURIComponent(p.query||p.name),{headers:{"Accept-Language":"it"}});
-    const d=await r.json();
-    if(d.length){
-      p.lat=+d[0].lat;p.lon=+d[0].lon;
-      await sb.from("places").update({lat:p.lat,lon:p.lon}).eq("id",p.id);
-      addMarker(p); render();
-    }
-  }catch(e){}
-}
-async function load(){
-  const {data,error}=await sb.from("places").select("*").order("id");
-  if(error){document.querySelector("#list").innerHTML='<div class="empty">Errore database: '+esc(error.message)+'</div>';return}
-  places=data||[];
-  buildSmartFilters();
-  sortByNovara();
-  render();
-  map.setView([45.4,9.2],6,{animate:false});
-  places.forEach((p,i)=>setTimeout(()=>addMarker(p),900+Math.min(i*5,950)));
-}
-function buildSmartFilters(){
-  const areas=[...new Set(places.map(placeArea))].sort((a,b)=>a==="Italia"?-1:b==="Italia"?1:a==="Altri"?1:b==="Altri"?-1:a.localeCompare(b,"it")),cats=[...new Set(places.map(placeCategory))].sort((a,b)=>a.localeCompare(b,"it"));
-  const a=document.querySelector("#areaFilter"),k=document.querySelector("#catFilter");
-  a.innerHTML='<option value="all">🌍 Tutte le aree</option>'+areas.map(x=>'<option>'+esc(x)+'</option>').join("");
-  k.innerHTML='<option value="all">🏷️ Tutte le categorie</option>'+cats.map(x=>'<option>'+esc(x)+'</option>').join("");
-}
-document.querySelector("#areaFilter").addEventListener("change",e=>{activeArea=e.target.value;render()});
-document.querySelector("#catFilter").addEventListener("change",e=>{activeCat=e.target.value;render()});
-document.querySelector("#nearMe").addEventListener("click",()=>{
-  if(!navigator.geolocation){alert("Geolocalizzazione non disponibile");return}
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const ll=[pos.coords.latitude,pos.coords.longitude];
-    map.setView(ll,10);
-    if(userMarker)map.removeLayer(userMarker);
-    userMarker=L.circleMarker(ll,{radius:8,weight:3,color:"#fff",fillColor:"#2563eb",fillOpacity:1}).addTo(map).bindPopup("📍 La tua posizione").openPopup();
-  },()=>alert("Consenti l'accesso alla posizione per usare Vicino a me."),{enableHighAccuracy:true,timeout:10000});
-});
-document.querySelector("#tripMode").addEventListener("click",()=>{
-  if(tripCenter){tripCenter=null;tripRadius=0;document.querySelector("#tripMode").textContent="🏍️";render();return}
-  const km=Number(prompt("Raggio della modalità viaggio in km (es. 100):","100"));
-  if(!km||km<1)return;
-  const cc=map.getCenter();tripCenter={lat:cc.lat,lon:cc.lng};tripRadius=km;
-  document.querySelector("#tripMode").textContent="🏍️✓";render();
-  alert("Modalità viaggio attiva: mostro i luoghi entro "+km+" km dal centro attuale della mappa. Premi di nuovo 🏍️ per disattivarla.");
-});
-document.querySelector("#darkMode").addEventListener("click",()=>{document.body.classList.toggle("dark");localStorage.setItem("mv-dark",document.body.classList.contains("dark")?"1":"0")});
-if(localStorage.getItem("mv-dark")==="1")document.body.classList.add("dark");
-function downloadText(name,text,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
-document.querySelector("#exportMenu").addEventListener("click",()=>{
-  const fmt=(prompt("Esporta in formato CSV o GPX?","GPX")||"").trim().toUpperCase();
-  const data=places.filter(p=>passesFilter(p)&&p.lat&&p.lon);
-  if(fmt==="CSV"){
-    const rows=[["Nome","Latitudine","Longitudine","Stato","Categoria","Area"],...data.map(p=>[p.name,p.lat,p.lon,p.visited?"Visitato":"Da visitare",placeCategory(p),placeArea(p)])];
-    downloadText("mappa-viaggi.csv",rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n"),"text/csv");
-  }else if(fmt==="GPX"){
-    const xml='<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Mappa Viaggi" xmlns="http://www.topografix.com/GPX/1/1">'+data.map(p=>'<wpt lat="'+p.lat+'" lon="'+p.lon+'"><name>'+esc(p.name)+'</name><desc>'+(p.visited?"Visitato":"Da visitare")+' - '+esc(placeCategory(p))+'</desc></wpt>').join("")+'</gpx>';
-    downloadText("mappa-viaggi.gpx",xml,"application/gpx+xml");
-  }
-});
-document.querySelector("#search").addEventListener("input",render);
-document.querySelectorAll(".filter").forEach(btn=>btn.addEventListener("click",()=>{
-  activeFilter=btn.dataset.filter;
-  document.querySelectorAll(".filter").forEach(b=>b.classList.toggle("active",b===btn));
-  render();
-}));
-document.querySelector("#add").addEventListener("click",async()=>{
-  const first=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
-  if(!first)return;
-  let name=first,lat=null,lon=null,q=first;
-  if(/^https?:\/\//i.test(first)){
-    try{
-      const rr=await fetch(SUPABASE_URL+"/functions/v1/resolve-google-maps?url="+encodeURIComponent(first));
-      const d=await rr.json();lat=d.lat;lon=d.lon;name=d.name||"";
-      name=prompt("Nome del luogo:",name||"")||name;
-      if(!name)return;
-      q=first;
-    }catch(e){alert("Non sono riuscito a leggere automaticamente il link. Inserisci il luogo manualmente.");return}
-  }else{
-    q=prompt("Località/indirizzo per posizionarlo sulla mappa:",first)||first;
-  }
-  const payload={name,query:q};if(lat&&lon){payload.lat=lat;payload.lon=lon}
-  const {data,error}=await sb.from("places").insert(payload).select().single();
-  if(error){alert("Errore: "+error.message);return}
-  places.push(data);buildSmartFilters();sortByNovara();render();
-  if(!lat||!lon)await geocodeNew(data);else addMarker(data);
-});
-function syncMenuButton(){
-  const panel=document.querySelector("#panel"),btn=document.querySelector("#openPanel");
-  if(window.innerWidth<=760)btn.style.display=panel.classList.contains("closed")?"block":"none";
-  else btn.style.display="none";
-}
-document.querySelector("#closePanel").addEventListener("click",()=>{document.querySelector("#panel").classList.add("closed");setTimeout(()=>map.invalidateSize(),260)});
-document.querySelector("#openPanel").addEventListener("click",()=>{document.querySelector("#panel").classList.remove("closed");setTimeout(()=>map.invalidateSize(),260)});
-if(window.innerWidth<=760){
+      if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),8));m.openPopup();focusListItem(p.id);if(window.innerWidth<=760){
   document.querySelector("#panel").classList.add("closed");
+  syncMenuButton();
   setTimeout(()=>map.invalidateSize(),50);
 }
 window.addEventListener("resize",syncMenuButton);
