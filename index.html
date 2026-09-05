@@ -426,58 +426,74 @@ async function resolvePlace(input){
     const r=await fetch(SUPABASE_URL+"/functions/v1/resolve-google-maps?"+key+"="+encodeURIComponent(input),{cache:"no-store"});
     if(!r.ok)return null;
     const d=await r.json();
-    if(Number.isFinite(+d.lat)&&Number.isFinite(+d.lon))return {lat:+d.lat,lon:+d.lon,name:(d.name||"").trim(),query:(d.queryText||d.name||input).trim()};
+    if(Number.isFinite(+d.lat)&&Number.isFinite(+d.lon)){
+      return {lat:+d.lat,lon:+d.lon,name:(d.name||"").trim(),query:(d.queryText||d.name||input).trim(),source:d.source||""};
+    }
   }catch(e){}
   return null;
 }
 async function saveNewPlace(name,query,lat,lon){
-  const clean=name.trim();
-  const dup=places.find(p=>(p.name||"").trim().toLowerCase()===clean.toLowerCase());
-  if(dup){
-    alert("Questo luogo è già presente nell’elenco.");
-    return null;
-  }
-  const {data,error}=await sb.from("places").insert({name:clean,query:query||clean,lat:+lat,lon:+lon}).select().single();
-  if(error){alert("Errore: "+error.message);return null}
+  name=(name||"").trim();
+  if(!name||!Number.isFinite(+lat)||!Number.isFinite(+lon)){alert("Coordinate non valide: il luogo non è stato salvato.");return null}
+  const duplicate=places.find(p=>(p.name||"").trim().toLowerCase()===name.toLowerCase());
+  if(duplicate){alert("Questo luogo è già presente nell’elenco.");return null}
+  const {data,error}=await sb.from("places").insert({name,query:query||name,lat:+lat,lon:+lon}).select().single();
+  if(error){alert("Errore durante il salvataggio: "+error.message);return null}
   if(!places.some(p=>p.id===data.id))places.push(data);
   buildSmartFilters();sortByNovara();
   if(!markers[data.id])addMarker(data);
   render();syncMarkerVisibility();
-  const nm=markers[data.id];
-  if(nm){map.setView(nm.getLatLng(),Math.max(map.getZoom(),9));nm.openPopup();}
+  const m=markers[data.id];
+  if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),10));m.openPopup()}
   return data;
 }
-function choosePointOnMap(name,query){
-  if(window.innerWidth<=760){
-    document.querySelector("#panel").classList.add("closed");
-    syncMenuButton();
-  }
-  alert("Non riesco a trovare automaticamente la posizione. Ora tocca il punto esatto sulla mappa.");
-  const handler=async e=>{
+function pickPlaceOnMap(name,query){
+  if(window.innerWidth<=760){document.querySelector("#panel").classList.add("closed");syncMenuButton()}
+  alert("Non ho trovato automaticamente la posizione. Tocca il punto esatto sulla mappa.");
+  let temp=null;
+  const handler=e=>{
     map.off("click",handler);
-    const ok=confirm("Usare questo punto per “"+name+"”?");
-    if(!ok){alert("Aggiunta annullata.");return}
-    await saveNewPlace(name,query,e.latlng.lat,e.latlng.lng);
+    if(temp)map.removeLayer(temp);
+    temp=L.marker(e.latlng).addTo(map);
+    if(confirm("Confermi questa posizione per “"+name+"”?")){
+      map.removeLayer(temp);
+      saveNewPlace(name,query,e.latlng.lat,e.latlng.lng);
+    }else{
+      map.removeLayer(temp);
+      alert("Aggiunta annullata.");
+    }
   };
-  map.on("click",handler);
+  map.once("click",handler);
 }
 document.querySelector("#add").addEventListener("click",async()=>{
-  const first=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
-  if(!first)return;
-  const trimmed=first.trim();
-  let resolved=await resolvePlace(trimmed);
-  let suggested=(resolved?.name||resolved?.query||trimmed).trim();
-  let name=prompt("Nome del luogo:",suggested)||suggested;
-  if(!name)return;
-  name=name.trim();
+  const input=prompt("Incolla un link Google Maps oppure scrivi il nome del luogo:");
+  if(!input)return;
+  const raw=input.trim();
+  let resolved=await resolvePlace(raw);
 
-  if(resolved){
-    const ok=confirm("Posizione trovata automaticamente. Vuoi aggiungere “"+name+"” sulla mappa?");
-    if(ok)await saveNewPlace(name,resolved.query||trimmed,resolved.lat,resolved.lon);
+  // Se un link breve non contiene coordinate utili, chiediamo il nome geografico e lo cerchiamo sul server.
+  if(!resolved&&/^https?:\/\//i.test(raw)){
+    const searchName=prompt("Il link non contiene una posizione utilizzabile. Scrivi il nome del luogo e la località (es. Rocchetta Mattei, Grizzana Morandi BO):");
+    if(searchName)resolved=await resolvePlace(searchName.trim());
+    if(resolved){
+      let name=prompt("Nome del luogo:",(resolved.name||searchName).split(",")[0])||resolved.name||searchName;
+      if(name)await saveNewPlace(name,resolved.query||searchName,resolved.lat,resolved.lon);
+      return;
+    }
+    const fallbackName=(searchName||"Nuovo luogo").trim();
+    pickPlaceOnMap(fallbackName,searchName||raw);
     return;
   }
 
-  choosePointOnMap(name,trimmed);
+  if(resolved){
+    const suggested=(resolved.name||resolved.query||raw).split(",")[0].trim();
+    const name=prompt("Nome del luogo:",suggested)||suggested;
+    if(name)await saveNewPlace(name,resolved.query||raw,resolved.lat,resolved.lon);
+    return;
+  }
+
+  const name=prompt("Nome da mostrare nell’elenco:",raw)||raw;
+  pickPlaceOnMap(name,raw);
 });
 // Aggiornamento in tempo reale: nuovi luoghi e modifiche compaiono senza ricaricare.
 sb.channel("places-live")
